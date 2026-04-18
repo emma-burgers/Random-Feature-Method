@@ -40,10 +40,6 @@ Jn = 4
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = generate_feature_vectors(Jn, 0)
 
-#To compute the matrices
-def P(x,  feature_vector):
-    return second_derivative_feature(x, feature_vector)
-
 #Initialize matrices to zero
 A = np.zeros(( Jn,  Jn))
 B = np.zeros( Jn)
@@ -56,17 +52,16 @@ for J in range(0,Jn):
     for j in range(0, Jn):
             total = 0
             for x in collocation_points:
-                P_nj = P(x,  feature_vectors_list[j])
-                P_NJ = P(x,  feature_vectors_list[J])
-                total += 2 * P_nj * P_NJ
+                P_j = second_derivative_feature(x,  feature_vectors_list[j])
+                P_J = second_derivative_feature(x,  feature_vectors_list[J])
+                total += 2 * P_j * P_J
             for xb in domain:
                 total += 2 * feature_function(xb,feature_vectors_list[j]) *feature_function(xb,feature_vectors_list[J])
-            A[ J,  j] = total
+            A[J, j] = total
 
     total = 0
     for xi in collocation_points:
-        P_NJ = P(xi,  feature_vectors_list[J])
-        total += 2 * f(xi) * P_NJ
+        total += 2 * f(xi) *  second_derivative_feature(xi,  feature_vectors_list[J])
     for xb in domain:
         total += 2 * u_exact(xb) * feature_function(xb, feature_vectors_list[J])
     B[J] = total
@@ -78,8 +73,8 @@ U = np.linalg.solve(A, B)
 def approximate_solution(x):
     total = 0
     for j in range(0,Jn):
-        unj = U[ j]
-        total += unj* feature_function(x,feature_vectors_list[j])
+        uj = U[ j]
+        total += uj* feature_function(x,feature_vectors_list[j])
     return total
 
 x_values = np.linspace(domain[0], domain[1], 300)
