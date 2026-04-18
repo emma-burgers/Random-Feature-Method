@@ -12,7 +12,7 @@ def f(x):
 def centers_radii(M):
     centers = [0,0.5,1]
     radii = 0.25
-    return centers, radii  # domain is [0,1] not [0,8]
+    return centers, radii 
 
 def normalize_coordinate(x,xn,r_n):
     return (x-xn)/r_n
