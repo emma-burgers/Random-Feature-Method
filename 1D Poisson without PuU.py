@@ -45,7 +45,7 @@ A = np.zeros(( Jn,  Jn))
 B = np.zeros( Jn)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(300)
+collocation_points = collocation_points_interior(M)
 
 #Compute matrice entries
 for J in range(0,Jn):

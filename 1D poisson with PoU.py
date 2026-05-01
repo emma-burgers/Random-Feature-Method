@@ -106,7 +106,7 @@ A = np.zeros((Mp * Jn, Mp * Jn))
 B = np.zeros(Mp * Jn)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(300)
+collocation_points = collocation_points_interior(M)
 
 #Compute matrice entries
 for N in range(0,Mp):
