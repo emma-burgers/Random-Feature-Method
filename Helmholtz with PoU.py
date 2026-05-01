@@ -12,7 +12,7 @@ def f(x):
     return 26*np.sin(2*x) + 5*np.cos(5*x)
 
 def centers_radii(M):
-    return [0,8], 4
+    return [0,10], 5
 
 def normalize_coordinate(x,xn,r_n):
     return (x-xn)/r_n
