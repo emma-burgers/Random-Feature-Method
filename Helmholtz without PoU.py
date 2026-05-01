@@ -40,8 +40,8 @@ def collocation_points_interior(I):
 
 #set values
 Jn = 40
-
 lamB = 1
+M=10
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = generate_feature_vectors(Jn)
@@ -55,7 +55,7 @@ A = np.zeros((Jn,  Jn))
 B = np.zeros(Jn)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(300)
+collocation_points = collocation_points_interior(M)
 
 #Compute matrice entries
 
