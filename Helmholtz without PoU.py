@@ -18,7 +18,7 @@ def normalize_coordinate(x,xn,r_n):
 #weight: Jn weights in [-R, R]^d
 #bias: Jn biases in [-R, R]
 def generate_feature_vectors(Jn):
-    weights = np.random.uniform(-4, 10, size=Jn)
+    weights = np.random.uniform(-8, 8, size=Jn)
     biases = np.random.uniform(-np.pi, np.pi, size=Jn)
     return [[weights[i], biases[i]] for i in range(Jn)]
 
@@ -93,8 +93,6 @@ def approximate_solution(x):
     return total
 
 x_values = np.linspace(domain[0], domain[1], 300)
-aproximation = [approximate_solution(x) for x in x_values]
-exact = [u_exact(x) for x in x_values]
 approximation = [approximate_solution(x) for x in x_values]
 exact = [u_exact(x) for x in x_values]
 
@@ -104,5 +102,5 @@ max_error = np.max(errors)
 plt.title(f"error = {max_error:.10f}")
 #plot result
 plt.plot(x_values, exact, color="red")
-plt.plot(x_values, aproximation, '--', color= "blue")
+plt.plot(x_values, approximation , '--', color= "blue")
 plt.show()

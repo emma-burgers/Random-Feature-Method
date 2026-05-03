@@ -66,7 +66,7 @@ def second_derivative_psi(x, xn, r_n):
 #weight: Jn weights in [-R, R]^d
 #bias: Jn biases in [-R, R]
 def generate_feature_vectors(Jn, R):
-    weights = np.random.uniform(-5, 5, size=Jn)
+    weights = np.random.uniform(-8, 8, size=Jn)
     biases = np.random.uniform(-np.pi, np.pi, size=Jn)
     return [[weights[i], biases[i]] for i in range(Jn)]
 
@@ -153,15 +153,15 @@ def approximate_solution(x):
     return total
 
 x_values = np.linspace(domain[0], domain[1], 300)
-aproximation = [approximate_solution(x) for x in x_values]
+
+approximation = [approximate_solution(x) for x in x_values]
 exact = [u_exact(x) for x in x_values]
 
+errors = np.abs(np.array(exact) - np.array(approximation))
+max_error = np.max(errors)
+
+plt.title(f"error = {max_error:.10f}")
 #plot result
-plt.plot(x_values, exact)
-plt.plot(x_values, aproximation, '--')
-max_diff = np.max(np.abs(np.array(aproximation) - np.array(exact)))
-plt.text(0.02, 0.98, f'Max error: {max_diff:.6f}',
-         transform=plt.gca().transAxes,
-         verticalalignment='top',
-         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+plt.plot(x_values, exact, color="red")
+plt.plot(x_values,approximation , '--', color= "blue")
 plt.show()
