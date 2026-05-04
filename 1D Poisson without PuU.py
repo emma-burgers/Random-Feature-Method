@@ -77,17 +77,15 @@ def approximate_solution(x):
         total += uj* feature_function(x,feature_vectors_list[j])
     return total
 
-x_values = np.linspace(domain[0], domain[1], 300)
-aproximation = [approximate_solution(x) for x in x_values]
-exact = [u_exact(x) for x in x_values]
-approximation = [approximate_solution(x) for x in x_values]
-exact = [u_exact(x) for x in x_values]
+points = np.linspace(domain[0], domain[1], 300)
+aproximation = [approximate_solution(x) for x in points]
+exact = [u_exact(x) for x in points]
 
-errors = np.abs(np.array(exact) - np.array(approximation))
+errors = np.abs(np.array(exact) - np.array(aproximation))
 max_error = np.max(errors)
 
 plt.title(f"error = {max_error:.10f}")
 #plot result
-plt.plot(x_values, exact, color="red")
-plt.plot(x_values, aproximation, '--', color= "blue")
+plt.plot(points, exact, color="red")
+plt.plot(points, aproximation, '--', color="blue")
 plt.show()
