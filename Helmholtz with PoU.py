@@ -21,43 +21,40 @@ def normalize_coordinate(x,xn,r_n):
 
 #Returns POU value of x in center xn
 def psi(x, xn, radii):
-    xtilde = normalize_coordinate(x, xn, radii)
+    x_norm = normalize_coordinate(x, xn, radii)
 
-    if -5/4 <= xtilde < -3/4:
-        return (1 + np.sin(2 * np.pi * xtilde)) / 2
-    elif -3/4 <= xtilde < 3/4:
+    if -5/4 <= x_norm < -3/4:
+        return (1 + np.sin(2 * np.pi * x_norm)) / 2
+    elif -3/4 <= x_norm < 3/4:
         return 1
-    elif 3/4 <= xtilde < 5/4:
-        return (1 - np.sin(2 * np.pi * xtilde)) / 2
+    elif 3/4 <= x_norm < 5/4:
+        return (1 - np.sin(2 * np.pi * x_norm)) / 2
     else:
         return 0
 
 #Returns value of the first derivative of the POU in x
 def first_derivative_psi(x, xn, radii):
-    xtilde = normalize_coordinate(x, xn, radii)
-    scale = 1 / radii
+    x_norm = normalize_coordinate(x, xn, radii)
 
-    if -5 / 4 <= xtilde < -3 / 4:
-        return (np.pi * np.cos(2 * np.pi * xtilde)) * scale
-    elif -3 / 4 <= xtilde < 3 / 4:
+    if -5 / 4 <= x_norm < -3 / 4:
+        return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
+    elif -3 / 4 <= x_norm < 3 / 4:
         return 0
-    elif 3 / 4 <= xtilde < 5 / 4:
-        return (-np.pi * np.cos(2 * np.pi * xtilde)) * scale
+    elif 3 / 4 <= x_norm < 5 / 4:
+        return (-np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
     else:
         return 0
 
 
 #Returns value of the second derivative of the POU in x
 def second_derivative_psi(x, xn, r_n):
-    xtilde = normalize_coordinate(x, xn, r_n)
-    scale = (1 / r_n) ** 2
-
-    if -5 / 4 <= xtilde < -3 / 4:
-        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * xtilde)) * scale
-    elif -3 / 4 <= xtilde < 3 / 4:
+    x_norm = normalize_coordinate(x, xn, r_n)
+    if -5 / 4 <= x_norm < -3 / 4:
+        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+    elif -3 / 4 <= x_norm < 3 / 4:
         return 0
-    elif 3 / 4 <= xtilde < 5 / 4:
-        return (2 * np.pi ** 2 * np.sin(2 * np.pi * xtilde)) * scale
+    elif 3 / 4 <= x_norm < 5 / 4:
+        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
     else:
         return 0
 
@@ -91,15 +88,13 @@ def collocation_points_boundary():
     return [domain[0], domain[1]]
 
 M = 100
-Jn = 20
+Jn = 30
 
 #calculate values
 centers, radii = centers_radii(M)
-Mp = len(centers)
-print(centers)
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = [generate_feature_vectors(Jn, radii) for i in range(Mp)]
+feature_vectors_list = [generate_feature_vectors(Jn, radii) for i in centers]
 
 #To compute the matrices
 def P(x, xn, feature_vector, r):
@@ -109,16 +104,16 @@ def P(x, xn, feature_vector, r):
             + lam * psi(x,xn,r) * feature_function(x,feature_vector))
 
 #Initialize matrices to zero
-A = np.zeros((Mp * Jn, Mp * Jn))
-B = np.zeros(Mp * Jn)
+A = np.zeros((len(centers)* Jn, len(centers) * Jn))
+B = np.zeros(len(centers) * Jn)
 
 #Choose collocation points
 collocation_points = collocation_points_interior(M)
 
 #Compute matrice entries
-for N in range(0,Mp):
+for N in range(len(centers)):
     for J in range(0,Jn):
-        for n in range(0, Mp ):
+        for n in range(len(centers)):
             for j in range(0, Jn):
                 total = 0
                 for x in collocation_points:
@@ -144,7 +139,7 @@ U = np.linalg.solve(A, B)
 #Calculate approximate solution using u_values
 def approximate_solution(x):
     total= 0
-    for n in range(0,Mp):
+    for n in range(len(centers)):
         pou = psi(x, centers[n], radii)
         for j in range(0,Jn):
             unj = U[n * Jn + j]
@@ -152,16 +147,14 @@ def approximate_solution(x):
             total += unj* feature_value * pou
     return total
 
-x_values = np.linspace(domain[0], domain[1], 300)
-
-approximation = [approximate_solution(x) for x in x_values]
-exact = [u_exact(x) for x in x_values]
+points = np.linspace(domain[0], domain[1], 300)
+approximation = [approximate_solution(x) for x in points]
+exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(approximation))
 max_error = np.max(errors)
 
 plt.title(f"error = {max_error:.10f}")
-#plot result
-plt.plot(x_values, exact, color="red")
-plt.plot(x_values,approximation , '--', color= "blue")
+plt.plot(points, exact, color="red")
+plt.plot(points, approximation, '--', color="blue")
 plt.show()

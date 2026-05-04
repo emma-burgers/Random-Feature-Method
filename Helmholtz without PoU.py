@@ -39,28 +39,28 @@ def collocation_points_interior(I):
     return np.random.uniform(domain[0], domain[1], I)
 
 #set values
-Jn = 40
+M = 40
 lamB = 1
-M=10
+Q= 10
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = generate_feature_vectors(Jn)
+feature_vectors_list = generate_feature_vectors(M)
 
 #To compute the matrices
 def P(x, feature_vector):
     return second_derivative_feature(x, feature_vector) + lam * feature_function(x,feature_vector)
 
 #Initialize matrices to zero
-A = np.zeros((Jn,  Jn))
-B = np.zeros(Jn)
+A = np.zeros((M, M))
+B = np.zeros(M)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(M)
+collocation_points = collocation_points_interior(Q)
 
 #Compute matrice entries
 
-for J in range(0,Jn):
-        for j in range(0, Jn):
+for J in range(0, M):
+        for j in range(0, M):
             total = 0
             for x in collocation_points:
                 P_nj = P(x, feature_vectors_list[j])
@@ -85,22 +85,21 @@ U = np.linalg.solve(A, B)
 def approximate_solution(x):
     total = 0
     subsum = 0
-    for j in range(0,Jn):
+    for j in range(0, M):
         unj = U[j]
         feature_value = feature_function(x, feature_vectors_list[j])
         subsum += unj* feature_value
     total +=  subsum
     return total
 
-x_values = np.linspace(domain[0], domain[1], 300)
-approximation = [approximate_solution(x) for x in x_values]
-exact = [u_exact(x) for x in x_values]
+points = np.linspace(domain[0], domain[1], 300)
+approximation = [approximate_solution(x) for x in points]
+exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(approximation))
 max_error = np.max(errors)
 
 plt.title(f"error = {max_error:.10f}")
-#plot result
-plt.plot(x_values, exact, color="red")
-plt.plot(x_values, approximation , '--', color= "blue")
+plt.plot(points, exact, color="red")
+plt.plot(points, approximation, '--', color="blue")
 plt.show()

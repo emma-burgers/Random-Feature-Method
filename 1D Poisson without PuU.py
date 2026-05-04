@@ -34,22 +34,22 @@ def collocation_points_interior(I):
     return np.random.uniform(0, 1, I)
 
 #set values
-M = 100
-Jn = 4
+Q = 100
+M = 4
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = generate_feature_vectors(Jn, 0)
+feature_vectors_list = generate_feature_vectors(M, 0)
 
 #Initialize matrices to zero
-A = np.zeros(( Jn,  Jn))
-B = np.zeros( Jn)
+A = np.zeros(( M,  M))
+B = np.zeros( M)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(M)
+collocation_points = collocation_points_interior(Q)
 
 #Compute matrice entries
-for J in range(0,Jn):
-    for j in range(0, Jn):
+for J in range(0,M):
+    for j in range(0, M):
             total = 0
             for x in collocation_points:
                 P_j = second_derivative_feature(x,  feature_vectors_list[j])
@@ -72,7 +72,7 @@ U = np.linalg.solve(A, B)
 #Calculate approximate solution using u_values
 def approximate_solution(x):
     total = 0
-    for j in range(0,Jn):
+    for j in range(0,M):
         uj = U[ j]
         total += uj* feature_function(x,feature_vectors_list[j])
     return total
@@ -85,7 +85,6 @@ errors = np.abs(np.array(exact) - np.array(aproximation))
 max_error = np.max(errors)
 
 plt.title(f"error = {max_error:.10f}")
-#plot result
 plt.plot(points, exact, color="red")
 plt.plot(points, aproximation, '--', color="blue")
 plt.show()
