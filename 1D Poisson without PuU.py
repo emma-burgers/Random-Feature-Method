@@ -13,8 +13,8 @@ def f(x):
 #weight: Jn weights in [-R, R]^d
 #bias: Jn biases in [-R, R]
 def generate_feature_vectors(Jn, R):
-    weights = np.random.uniform(-0.25, 0.25 , size=Jn)
-    biases = np.random.uniform(-0.25, 0.25, size=Jn)
+    weights = np.random.uniform(-0.5, 0.5 , size=Jn)
+    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
     return [[weights[i], biases[i]] for i in range(Jn)]
 
 #Returns value of the feature_function using feature_vector (weight,bias) in center xn
@@ -34,8 +34,8 @@ def collocation_points_interior(I):
     return np.random.uniform(0, 1, I)
 
 #set values
-Q = 100
-M = 4
+Q = 20
+M = 10
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = generate_feature_vectors(M, 0)

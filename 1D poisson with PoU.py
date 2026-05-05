@@ -10,8 +10,8 @@ def f(x):
     return 1
 
 def centers_radii(M):
-    centers = [0,0.5,1]
-    radii = 0.25
+    centers = [0,1]
+    radii = 0.5
     return centers, radii 
 
 def normalize_coordinate(x,xn,r_n):
@@ -61,7 +61,7 @@ def second_derivative_psi(x, xn, r_n):
 #bias: Jn biases in [-R, R]
 def generate_feature_vectors(Jn, R):
     weights = np.random.uniform(-R, R , size=Jn)
-    biases = np.random.uniform(-R, R, size=Jn)
+    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
     return [[weights[i], biases[i]] for i in range(Jn)]
 
 #Returns value of the feature_function using feature_vector (weight,bias) in center xn
