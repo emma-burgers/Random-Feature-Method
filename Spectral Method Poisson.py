@@ -8,26 +8,25 @@ def chebyshev(N):
     return np.array([np.cos(np.pi * j / N) for j in range(N+1)])
 
 #approximates u''
+def D1(N) :
+    x = np.cos(np.pi * np.arange(N + 1) / N )
+    c = np.insert(np.ones(N-1),[0,N-1], [2,2])
+    D_N = np.empty(shape = (N+1, N+1))
+    for j in range(N + 1) :
+        for l in range(N + 1) :
+            if j == 0 and l == 0 :
+                D_N[j,l] = (2 * N ** 2 + 1) / 6
+            if j == N and l == N :
+                D_N[j,l] = - (2 * N ** 2 + 1) / 6
+            if j == l and j < N and j > 0 :
+                D_N[j,l] = - x[j] / (2 * (1 - x[j] ** 2))
+            if j != l :
+                D_N[j,l] =  c[j]/c[l] * ((-1) ** (j + l)) / (x[j] - x[l])
+    return D_N
+
 def D2(N):
-    x = chebyshev(N)
-    c = np.array([2] + [1]*(N-1) + [2])
-    D2_matrix = np.zeros((N + 1, N + 1))
-    for j in range(N + 1):
-        for l in range(N + 1):
-            if j != l and j != 0 and j != N:
-                D2_matrix[j, l] = ((-1) ** (j + l) / c[j] * (x[j]**2 + x[j]*x[l] - 2)
-                            / ((1 - x[j]**2) * (x[j] - x[l])**2))
-            elif j == l and 1 <= j <= N - 1:
-                D2_matrix[j, j] = -((N**2 - 1) * (1 - x[j]**2) + 3) / (3 * (1 - x[j]**2)**2)
-            elif j == 0 and l != 0:
-                D2_matrix[j, l] = (2/3 * (-1)**l / c[l] * ((2*N**2 + 1) * (1 - x[l]) - 6)
-                            / (1 - x[l])**2)
-            elif j == N and l != N:
-                D2_matrix[j, l] = (2/3 * (-1)**(l + N) / c[l] * ((2*N**2 + 1) * (1 + x[l]) - 6)
-                            / (1 + x[l])**2)
-    D2_matrix[0, 0] = (N**4 - 1) / 15
-    D2_matrix[N, N] = (N**4 - 1) / 15
-    return D2_matrix
+    D = D1(N)
+    return D @ D
 
 N = 10
 chebyshev_nodes = chebyshev(N)
