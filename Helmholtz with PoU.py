@@ -87,14 +87,14 @@ def collocation_points_interior(I):
 def collocation_points_boundary():
     return [domain[0], domain[1]]
 
-M = 100
-Jn = 30
+Q = 50
+M = 30
 
 #calculate values
-centers, radii = centers_radii(M)
+centers, radii = centers_radii(Q)
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = [generate_feature_vectors(Jn, radii) for i in centers]
+feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
 
 #To compute the matrices
 def P(x, xn, feature_vector, r):
@@ -104,34 +104,34 @@ def P(x, xn, feature_vector, r):
             + lam * psi(x,xn,r) * feature_function(x,feature_vector))
 
 #Initialize matrices to zero
-A = np.zeros((len(centers)* Jn, len(centers) * Jn))
-B = np.zeros(len(centers) * Jn)
+A = np.zeros((len(centers) * M, len(centers) * M))
+B = np.zeros(len(centers) * M)
 
 #Choose collocation points
-collocation_points = collocation_points_interior(M)
+collocation_points = collocation_points_interior(Q)
 
 #Compute matrice entries
 for N in range(len(centers)):
-    for J in range(0,Jn):
+    for J in range(0, M):
         for n in range(len(centers)):
-            for j in range(0, Jn):
+            for j in range(0, M):
                 total = 0
                 for x in collocation_points:
                     P_nj = P(x, centers[n], feature_vectors_list[n][j], radii)
                     P_NJ = P(x, centers[N], feature_vectors_list[N][J], radii)
                     total += 2 * P_nj * P_NJ
-                A[N * Jn + J, n * Jn + j] += total
+                A[N * M + J, n * M + j] += total
                 total = 0
                 for x in domain:
                     total += 2* psi(x,centers[n], radii) * feature_function(x,feature_vectors_list[n][j]) * psi(x,centers[N], radii) * feature_function(x,feature_vectors_list[N][J])
-                A[N * Jn + J, n * Jn + j] += total
+                A[N * M + J, n * M + j] += total
         total = 0
         for xi in collocation_points:
             P_NJ = P(xi, centers[N], feature_vectors_list[N][J], radii)
             total += 2 * f(xi) * P_NJ
         for xb in domain:
             total += 2 * u_exact(xb) * psi(xb, centers[N], radii) * feature_function(xb, feature_vectors_list[N][J])
-        B[N * Jn + J] = total
+        B[N * M + J] = total
 
 #Solve to find optimal u_values
 U = np.linalg.solve(A, B)
@@ -141,8 +141,8 @@ def approximate_solution(x):
     total= 0
     for n in range(len(centers)):
         pou = psi(x, centers[n], radii)
-        for j in range(0,Jn):
-            unj = U[n * Jn + j]
+        for j in range(0, M):
+            unj = U[n * M + j]
             feature_value = feature_function(x, feature_vectors_list[n][j])
             total += unj* feature_value * pou
     return total
@@ -152,9 +152,8 @@ approximation = [approximate_solution(x) for x in points]
 exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(approximation))
-max_error = np.max(errors)
 
-plt.title(f"error = {max_error:.10f}")
+plt.title("error = {:.10f}".format(np.max(errors)))
 plt.plot(points, exact, color="red")
 plt.plot(points, approximation, '--', color="blue")
 plt.show()

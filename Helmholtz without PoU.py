@@ -41,7 +41,7 @@ def collocation_points_interior(I):
 #set values
 M = 40
 lamB = 1
-Q= 10
+Q= 80
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = generate_feature_vectors(M)
@@ -99,7 +99,8 @@ exact = [u_exact(x) for x in points]
 errors = np.abs(np.array(exact) - np.array(approximation))
 max_error = np.max(errors)
 
-plt.title(f"error = {max_error:.10f}")
+
+plt.title("error = {:.10f}".format(np.max(errors)))
 plt.plot(points, exact, color="red")
 plt.plot(points, approximation, '--', color="blue")
 plt.show()

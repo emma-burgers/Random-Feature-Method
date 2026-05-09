@@ -82,9 +82,7 @@ aproximation = [approximate_solution(x) for x in points]
 exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(aproximation))
-max_error = np.max(errors)
-
-plt.title(f"error = {max_error:.10f}")
+plt.title("error = {:.10f}".format(np.max(errors)))
 plt.plot(points, exact, color="red")
 plt.plot(points, aproximation, '--', color="blue")
 plt.show()

@@ -50,6 +50,6 @@ points = np.linspace(0, 1, 300)
 approximation = [approximate_solution(x, chebyshev_nodes, U) for x in points]
 exact = [u_exact(x) for x in points]
 errors = abs(np.array(approximation) - np.array(exact))
-print(f"Max error: {np.max(errors):.2e}")
+print("error = {:.3e}".format(np.max(errors)))
 
 
