@@ -28,7 +28,7 @@ def D2(N):
     D = D1(N)
     return D @ D
 
-N = 10
+N = 5
 chebyshev_nodes = chebyshev(N)
 A = 4.0 * D2(N)
 B = np.array([0] + [1 for i in range(N-1)] + [0])
