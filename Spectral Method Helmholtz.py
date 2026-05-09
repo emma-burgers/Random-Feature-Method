@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.interpolate import BarycentricInterpolator
 
-L = 10
-
 def u_exact(x):
     return np.sin(2*x) + np.cos(5*x)
 
@@ -32,27 +30,25 @@ def D2(N):
     D = D1(N)
     return D @ D
 
-N = 25
+N = 3
 cheby_nodes = chebyshev(N)
 
-x_phys = L/2 * (cheby_nodes + 1)
-
-scale = (2/L)**2
-A = scale * D2(N) + 30 * np.eye(N+1)
+x_phys = 5 * (cheby_nodes + 1)
+A =  (2/10)**2 * D2(N) + 30 * np.eye(N+1)
 B = f(x_phys)
 
 # Enforce boundary conditions
 A[N, :] = 0;  A[N, N] = 1;  B[N] = u_exact(0)
-A[0, :] = 0;  A[0, 0] = 1;  B[0] = u_exact(L)
+A[0, :] = 0;  A[0, 0] = 1;  B[0] = u_exact(10)
 
 U = np.linalg.solve(A, B)
 
 def approximate_solution(x_in, cheby_nodes, U):
-    t = 2*x_in/L - 1
-    poly = BarycentricInterpolator(cheby_nodes, U)
-    return poly(t)
+    x = 2*x_in/10 - 1
+    polynomial = BarycentricInterpolator(cheby_nodes, U)
+    return polynomial(x)
 
-points = np.linspace(0, L, 300)
+points = np.linspace(0, 10, 300)
 approximation = np.array([approximate_solution(x, cheby_nodes, U) for x in points])
 exact = u_exact(points)
 errors = np.abs(approximation - exact)
