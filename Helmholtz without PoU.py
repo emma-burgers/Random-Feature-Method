@@ -41,7 +41,7 @@ def collocation_points_interior(I):
 #set values
 M = 40
 lamB = 1
-Q= 80
+Q = 80
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = generate_feature_vectors(M)
@@ -58,7 +58,6 @@ B = np.zeros(M)
 collocation_points = collocation_points_interior(Q)
 
 #Compute matrice entries
-
 for J in range(0, M):
         for j in range(0, M):
             total = 0
@@ -79,7 +78,7 @@ for J in range(0, M):
         B[J] = total
 
 #Solve to find optimal u_values
-U = np.linalg.solve(A, B)
+U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
 #Calculate approximate solution using u_values
 def approximate_solution(x):
@@ -98,6 +97,7 @@ exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(approximation))
 max_error = np.max(errors)
+print(max_error)
 
 
 plt.title("error = {:.10f}".format(np.max(errors)))
