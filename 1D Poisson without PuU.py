@@ -67,7 +67,7 @@ for J in range(0,M):
     B[J] = total
 
 #Solve to find optimal u_values
-U = np.linalg.solve(A, B)
+U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
 #Calculate approximate solution using u_values
 def approximate_solution(x):
