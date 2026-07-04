@@ -30,25 +30,25 @@ def D2(N):
     D = D1(N)
     return D @ D
 
-N = 3
+N = 80
 cheby_nodes = chebyshev(N)
 
-x_phys = 5 * (cheby_nodes + 1)
-A =  (2/10)**2 * D2(N) + 30 * np.eye(N+1)
+x_phys = 10 * (cheby_nodes + 1)
+A =  (2/20)**2 * D2(N) + 30 * np.eye(N+1)
 B = f(x_phys)
 
 # Enforce boundary conditions
 A[N, :] = 0;  A[N, N] = 1;  B[N] = u_exact(0)
-A[0, :] = 0;  A[0, 0] = 1;  B[0] = u_exact(10)
+A[0, :] = 0;  A[0, 0] = 1;  B[0] = u_exact(20)
 
 U = np.linalg.solve(A, B)
 
 def approximate_solution(x_in, cheby_nodes, U):
-    x = 2*x_in/10 - 1
+    x = 2*x_in/20 - 1
     polynomial = BarycentricInterpolator(cheby_nodes, U)
     return polynomial(x)
 
-points = np.linspace(0, 10, 300)
+points = np.linspace(0, 20, 300)
 approximation = np.array([approximate_solution(x, cheby_nodes, U) for x in points])
 exact = u_exact(points)
 errors = np.abs(approximation - exact)

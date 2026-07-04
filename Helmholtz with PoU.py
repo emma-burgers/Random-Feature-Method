@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-domain = [0,10]
+domain = [0,6]
 
 lam = 30
 
@@ -11,8 +11,9 @@ def u_exact(x):
 def f(x):
     return 26*np.sin(2*x) + 5*np.cos(5*x)
 
-def centers_radii(M):
-    return [0,10], 5
+def centers_radii(N):
+    centers = np.linspace(domain[0], domain[1], num=N)
+    return centers, (centers[1] - centers[0]) / 2
 
 def normalize_coordinate(x,xn,r_n):
     return (x-xn)/r_n
@@ -87,11 +88,13 @@ def collocation_points_interior(I):
 def collocation_points_boundary():
     return [domain[0], domain[1]]
 
-Q = 50
-M = 30
+M = 20
+N = 3
+Q = M*N*2
+lamB = Q//20
 
 #calculate values
-centers, radii = centers_radii(Q)
+centers, radii = centers_radii(N)
 
 #For each center, we generate a list of Jn random features vectors (weight,bias)
 feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
@@ -123,14 +126,14 @@ for N in range(len(centers)):
                 A[N * M + J, n * M + j] += total
                 total = 0
                 for x in domain:
-                    total += 2* psi(x,centers[n], radii) * feature_function(x,feature_vectors_list[n][j]) * psi(x,centers[N], radii) * feature_function(x,feature_vectors_list[N][J])
+                    total += 2* lamB *psi(x,centers[n], radii) * feature_function(x,feature_vectors_list[n][j]) * psi(x,centers[N], radii) * feature_function(x,feature_vectors_list[N][J])
                 A[N * M + J, n * M + j] += total
         total = 0
         for xi in collocation_points:
             P_NJ = P(xi, centers[N], feature_vectors_list[N][J], radii)
             total += 2 * f(xi) * P_NJ
         for xb in domain:
-            total += 2 * u_exact(xb) * psi(xb, centers[N], radii) * feature_function(xb, feature_vectors_list[N][J])
+            total += 2 * lamB *u_exact(xb) * psi(xb, centers[N], radii) * feature_function(xb, feature_vectors_list[N][J])
         B[N * M + J] = total
 
 #Solve to find optimal u_values
@@ -152,6 +155,7 @@ approximation = [approximate_solution(x) for x in points]
 exact = [u_exact(x) for x in points]
 
 errors = np.abs(np.array(exact) - np.array(approximation))
+print(np.max(errors))
 
 plt.title("error = {:.10f}".format(np.max(errors)))
 plt.plot(points, exact, color="red")
