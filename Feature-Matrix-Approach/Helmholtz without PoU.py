@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # exact solution to PDE
 def u_exact(x):
     return np.sin(2 * x) + np.cos(5 * x)
-
 
 def f(x):
     return 26 * np.sin(2 * x) + 5 * np.cos(5 * x)
@@ -13,7 +11,6 @@ def f(x):
 
 def normalize_coordinate(x, xn, r_n):
     return (x - xn) / r_n
-
 
 # Returns a list of random vector '(weight, bias)' for each random feature function, most optimal:-7.2,7.2
 # weight: Jn weights in [-R, R]^d

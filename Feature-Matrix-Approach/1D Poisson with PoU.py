@@ -1,26 +1,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+domain = [0,1]
+
 # exact solution to PDE
 def u_exact(x):
     return -1 / 2 * x * (1 - x)
 
-
+#forcing term of PDE
 def f(x):
     return 1
 
-
-# We have two centers at 0 and 10, with radius 5
+# Compute N centers and the radius
 def centers_radii(N):
     centers = np.linspace(domain[0], domain[1], num=N)
     return centers, (centers[1] - centers[0]) / 2
 
-def normalize_coordinate(x, xn, r_n):
-    return (x - xn) / r_n
+# Normalize 'x' with respect to center 'c' and radius 'r'
+def normalize_coordinate(x, c, r):
+    return (x - c) / r
 
-# Returns POU value of x in center xn
-def psi(x, xn, radii):
-    x_norm = normalize_coordinate(x, xn, radii)
+# Evaluate PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5 / 4 <= x_norm < -3 / 4:
         return (1 + np.sin(2 * np.pi * x_norm)) / 2
@@ -32,9 +34,9 @@ def psi(x, xn, radii):
         return 0
 
 
-# Returns value of the first derivative of the POU in x
-def first_derivative_psi(x, xn, radii):
-    x_norm = normalize_coordinate(x, xn, radii)
+# Evaluate first derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_psi(x,c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5 / 4 <= x_norm < -3 / 4:
         return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
@@ -46,54 +48,48 @@ def first_derivative_psi(x, xn, radii):
         return 0
 
 
-# Returns value of the second derivative of the POU in x
-def second_derivative_psi(x, xn, r_n):
-    x_norm = normalize_coordinate(x, xn, r_n)
+# Evaluate second derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
     if -5 / 4 <= x_norm < -3 / 4:
-        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     elif -3 / 4 <= x_norm < 3 / 4:
         return 0
     elif 3 / 4 <= x_norm < 5 / 4:
-        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     else:
         return 0
 
+#Returns a list of m feature vectors '(weight, bias)'
+def generate_feature_vectors(m):
+    weights = np.random.uniform(-0.5, 0.5, size=m)
+    biases = np.random.uniform(-1, 1, size=m)
+    return [[weights[i], biases[i]] for i in range(m)]
 
-# Returns a list of random vector '(weight, bias)' for each random feature function
-# weight: Jn weights in [-R, R]^d
-# bias: Jn biases in [-R, R]
-def generate_feature_vectors(Jn, R):
-    weights = np.random.uniform(-0.5, 0.5, size=Jn)
-    biases = np.random.uniform(-1, 1, size=Jn)
-    return [[weights[i], biases[i]] for i in range(Jn)]
-
-
-# Returns value of the feature_function using feature_vector (weight,bias) in center xn
-# Returns value of the feature_function using feature_vector (weight,bias) in center xn
-def feature_function(x, feature_vector, xn, rn):
-    x = normalize_coordinate(x, xn, rn)
+#Evaluate feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def feature_function(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
     return np.tanh(x * feature_vector[0] + feature_vector[1])
 
 
-# Returns the value of the first derivative of the feature_function for a point x in xn
-def first_derivative_feature(x, feature_vector, xn, rn):
-    x = normalize_coordinate(x, xn, rn)
-    return feature_vector[0] * (1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2) * (1 / rn)
+#Evaluate first derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_feature(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
+    return feature_vector[0] * (1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2) * (1 / r)
 
 
-# Returns the value of the second derivative of the feature_function for a point x in xn
-def second_derivative_feature(x, feature_vector, xn, rn):
-    x = normalize_coordinate(x, xn, rn)
+#Evaluate second derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_feature(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
     return feature_vector[0] ** 2 * (-2 * np.tanh(feature_vector[0] * x + feature_vector[1]) * (
-            1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2)) * ((1 / rn) ** 2)
+            1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2)) * ((1 / r) ** 2)
 
-
-# sample points randomly in the domain
+#Sample interior collocation points
 def collocation_points_interior(I):
     return np.random.uniform(domain[0], domain[1], I)
 
 
-# Calculate approximate solution using u_values
+# Calculate approximate solution using found coefficients
 def approximate_solution(x):
     total = 0
     for n in range(len(centers)):
@@ -112,27 +108,23 @@ def P(x, xn, feature_vector, r):
             + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector, xn, r))
 
 
-# M is the number of features
+# Choose number of features M, number of collocation points Q, and number of subdomains N
 for M in [20]:
     error_list = []
 
-    # number of iterations for convergence study
+    # Number of iterations for convergence study
     for i in range(1):
-        domain = [0,1]
         N=2
-
-        # Q is the number of collocation points
         Q =2*N*M
 
         #Scaling of the boundary contribution
         lamB = Q//10
 
-
         #calculate values
         centers, radii = centers_radii(N)
 
-        #For each center, we generate a list of Jn random features vectors (weight,bias)
-        feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
+        #Generate M features per center
+        feature_vectors_list = [generate_feature_vectors(M) for i in centers]
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)
