@@ -79,6 +79,20 @@ def second_derivative_feature(x, feature_vector):
 def collocation_points_interior(I):
     return np.random.uniform(0, 1, I)
 
+# Calculate approximate solution using u_values
+def approximate_solution(x):
+    total = 0
+    for n in range(0, Mp):
+        pou = psi(x, centers[n], radii)
+        subsum = 0
+        for j in range(0, M):
+            unj = U[n * M + j]
+            feature_value = feature_function(x, feature_vectors_list[n][j])
+            subsum += unj * feature_value
+        total += pou * subsum
+    return total
+
+
 for M in [10]:
     err_list=[]
     for i in range(1):
@@ -132,18 +146,6 @@ for M in [10]:
         #Solve to find optimal u_values
         U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
-        #Calculate approximate solution using u_values
-        def approximate_solution(x):
-            total = 0
-            for n in range(0,Mp):
-                pou = psi(x, centers[n], radii)
-                subsum = 0
-                for j in range(0, M):
-                    unj = U[n * M + j]
-                    feature_value = feature_function(x, feature_vectors_list[n][j])
-                    subsum += unj* feature_value
-                total += pou * subsum
-            return total
 
         points = np.linspace(domain[0], domain[1], 300)
         aproximation = [approximate_solution(x) for x in points]

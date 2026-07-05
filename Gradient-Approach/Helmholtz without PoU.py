@@ -38,6 +38,22 @@ def second_derivative_feature(x, feature_vector):
 def collocation_points_interior(I):
     return np.random.uniform(domain[0], domain[1], I)
 
+# To compute the matrices
+def P(x, feature_vector):
+    return second_derivative_feature(x, feature_vector) + lam * feature_function(x, feature_vector)
+
+# Calculate approximate solution using u_values
+def approximate_solution(x):
+    total = 0
+    subsum = 0
+    for j in range(0, M):
+        unj = U[j]
+        feature_value = feature_function(x, feature_vectors_list[j])
+        subsum += unj * feature_value
+    total += subsum
+    return total
+
+
 for M in [20]:
     err_list = []
     for i in range(1):
@@ -48,9 +64,6 @@ for M in [20]:
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = generate_feature_vectors(M)
 
-        #To compute the matrices
-        def P(x, feature_vector):
-            return second_derivative_feature(x, feature_vector) + lam * feature_function(x,feature_vector)
 
         #Initialize matrices to zero
         A = np.zeros((M, M))
@@ -81,17 +94,6 @@ for M in [20]:
 
         #Solve to find optimal u_values
         U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
-
-        #Calculate approximate solution using u_values
-        def approximate_solution(x):
-            total = 0
-            subsum = 0
-            for j in range(0, M):
-                unj = U[j]
-                feature_value = feature_function(x, feature_vectors_list[j])
-                subsum += unj* feature_value
-            total +=  subsum
-            return total
 
         points = np.linspace(domain[0], domain[1], 300)
         approximation = [approximate_solution(x) for x in points]

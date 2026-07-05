@@ -87,6 +87,25 @@ def collocation_points_interior(I):
 def collocation_points_boundary():
     return [domain[0], domain[1]]
 
+# To compute the matrices
+def P(x, xn, feature_vector, r):
+    return (psi(x, xn, r) * second_derivative_feature(x, feature_vector)
+            + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector)
+            + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector)
+            + lam * psi(x, xn, r) * feature_function(x, feature_vector))
+
+# Calculate approximate solution using u_values
+def approximate_solution(x):
+    total = 0
+    for n in range(len(centers)):
+        pou = psi(x, centers[n], radii)
+        for j in range(0, M):
+            unj = U[n * M + j]
+            feature_value = feature_function(x, feature_vectors_list[n][j])
+            total += unj * feature_value * pou
+    return total
+
+
 for M in [20]:
     err_list = []
     for i in range(1):
@@ -99,13 +118,6 @@ for M in [20]:
 
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
-
-        #To compute the matrices
-        def P(x, xn, feature_vector, r):
-            return (psi(x, xn, r) * second_derivative_feature(x, feature_vector)
-                    + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector)
-                    + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector)
-                    + lam * psi(x,xn,r) * feature_function(x,feature_vector))
 
         #Initialize matrices to zero
         A = np.zeros((len(centers) * M, len(centers) * M))
@@ -140,16 +152,6 @@ for M in [20]:
         #Solve to find optimal u_values
         U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
-        #Calculate approximate solution using u_values
-        def approximate_solution(x):
-            total= 0
-            for n in range(len(centers)):
-                pou = psi(x, centers[n], radii)
-                for j in range(0, M):
-                    unj = U[n * M + j]
-                    feature_value = feature_function(x, feature_vectors_list[n][j])
-                    total += unj* feature_value * pou
-            return total
 
         points = np.linspace(domain[0], domain[1], 300)
         approximation = [approximate_solution(x) for x in points]
