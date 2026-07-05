@@ -1,17 +1,125 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# exact solution to PDE
+def u_exact(x):
+    return np.sin(2 * x) + np.cos(5 * x)
+
+
+def f(x):
+    return 26 * np.sin(2 * x) + 5 * np.cos(5 * x)
+
+
+# We have two centers at 0 and 10, with radius 5
+def centers_radii(N):
+    centers = np.linspace(domain[0], domain[1], num=N)
+    return centers, (centers[1] - centers[0]) / 2
+
+
+def normalize_coordinate(x, xn, r_n):
+    return (x - xn) / r_n
+
+
+# Returns POU value of x in center xn
+def psi(x, xn, radii):
+    x_norm = normalize_coordinate(x, xn, radii)
+
+    if -5 / 4 <= x_norm < -3 / 4:
+        return (1 + np.sin(2 * np.pi * x_norm)) / 2
+    elif -3 / 4 <= x_norm < 3 / 4:
+        return 1
+    elif 3 / 4 <= x_norm < 5 / 4:
+        return (1 - np.sin(2 * np.pi * x_norm)) / 2
+    else:
+        return 0
+
+
+# Returns value of the first derivative of the POU in x
+def first_derivative_psi(x, xn, radii):
+    x_norm = normalize_coordinate(x, xn, radii)
+
+    if -5 / 4 <= x_norm < -3 / 4:
+        return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
+    elif -3 / 4 <= x_norm < 3 / 4:
+        return 0
+    elif 3 / 4 <= x_norm < 5 / 4:
+        return (-np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
+    else:
+        return 0
+
+
+# Returns value of the second derivative of the POU in x
+def second_derivative_psi(x, xn, r_n):
+    x_norm = normalize_coordinate(x, xn, r_n)
+    if -5 / 4 <= x_norm < -3 / 4:
+        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+    elif -3 / 4 <= x_norm < 3 / 4:
+        return 0
+    elif 3 / 4 <= x_norm < 5 / 4:
+        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+    else:
+        return 0
+
+
+# Returns a list of random vector '(weight, bias)' for each random feature function
+# weight: Jn weights in [-R, R]^d
+# bias: Jn biases in [-R, R]
+def generate_feature_vectors(Jn, R):
+    weights = np.random.uniform(-8, 8, size=Jn)
+    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
+    return [[weights[i], biases[i]] for i in range(Jn)]
+
+
+# Returns value of the feature_function using feature_vector (weight,bias) in center xn
+def feature_function(x, feature_vector, xn, rn):
+    x_norm = normalize_coordinate(x, xn, rn)
+    return np.cos(x_norm * feature_vector[0] + feature_vector[1])
+
+
+# Returns the value of the first derivative of the feature_function for a point x in xn
+def first_derivative_feature(x, feature_vector, xn, rn):
+    x_norm = normalize_coordinate(x, xn, rn)
+    return feature_vector[0] * (-np.sin(x_norm * feature_vector[0] + feature_vector[1])) * (1 / rn)
+
+
+# Returns the value of the second derivative of the feature_function for a point x in xn
+def second_derivative_feature(x, feature_vector, xn, rn):
+    x_norm = normalize_coordinate(x, xn, rn)
+    return (feature_vector[0] ** 2) * (-np.cos(x_norm * feature_vector[0] + feature_vector[1])) * ((1 / rn) ** 2)
+
+
+# sample points randomly in the domain
+def collocation_points_interior(I):
+    return np.random.uniform(domain[0], domain[1], I)
+
+
+# not being used currently
+def collocation_points_boundary():
+    return [domain[0], domain[1]]
+
+
+# Calculate approximate solution using u_values
+def approximate_solution(x):
+    total = 0
+    for n in range(len(centers)):
+        pou = psi(x, centers[n], radii)
+        for j in range(0, M):
+            unj = U[n * M + j]
+            feature_value = feature_function(x, feature_vectors_list[n][j], centers[n], radii)
+
+            total += unj * feature_value * pou
+    return total
+
+
 ## M is the number of features
-for M in [60]:
+for M in [20]:
     error_list = []
 
     ## number of iterations for convergence study
-    for i in range(2):
+    for i in range(1):
         domain = [0,20]
         N = 10
 
-        #For som reason a factor of five times the number of features times subdomains works the best
-        # Q is the number of collocation points ## we want to have a high number of collocation points relative to the number of features ot reduce ill conditioning.
         Q = M * N * 2
 
         #Scaling of the boundary contribution
@@ -20,93 +128,6 @@ for M in [60]:
         # lambda parameter in the PDE
         lam = 30
 
-        # exact solution to PDE
-        def u_exact(x):
-            return np.sin(2*x) + np.cos(5*x)
-
-        def f(x):
-            return 26*np.sin(2*x) + 5*np.cos(5*x)
-
-        # We have two centers at 0 and 10, with radius 5
-        def centers_radii(N):
-            centers =  np.linspace(domain[0], domain[1],num=N)
-            return centers, (centers[1]-centers[0])/2
-
-
-        def normalize_coordinate(x,xn,r_n):
-            return (x-xn)/r_n
-
-
-        #Returns POU value of x in center xn
-        def psi(x, xn, radii):
-            x_norm = normalize_coordinate(x, xn, radii)
-
-            if -5/4 <= x_norm < -3/4:
-                return (1 + np.sin(2 * np.pi * x_norm)) / 2
-            elif -3/4 <= x_norm < 3/4:
-                return 1
-            elif 3/4 <= x_norm < 5/4:
-                return (1 - np.sin(2 * np.pi * x_norm)) / 2
-            else:
-                return 0
-
-        #Returns value of the first derivative of the POU in x
-        def first_derivative_psi(x, xn, radii):
-            x_norm = normalize_coordinate(x, xn, radii)
-
-            if -5 / 4 <= x_norm < -3 / 4:
-                return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
-            elif -3 / 4 <= x_norm < 3 / 4:
-                return 0
-            elif 3 / 4 <= x_norm < 5 / 4:
-                return (-np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
-            else:
-                return 0
-
-
-        #Returns value of the second derivative of the POU in x
-        def second_derivative_psi(x, xn, r_n):
-            x_norm = normalize_coordinate(x, xn, r_n)
-            if -5 / 4 <= x_norm < -3 / 4:
-                return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
-            elif -3 / 4 <= x_norm < 3 / 4:
-                return 0
-            elif 3 / 4 <= x_norm < 5 / 4:
-                return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
-            else:
-                return 0
-
-
-        #Returns a list of random vector '(weight, bias)' for each random feature function
-        #weight: Jn weights in [-R, R]^d
-        #bias: Jn biases in [-R, R]
-        def generate_feature_vectors(Jn, R):
-            weights = np.random.uniform(-8, 8, size=Jn)
-            biases = np.random.uniform(-np.pi, np.pi, size=Jn)
-            return [[weights[i], biases[i]] for i in range(Jn)]
-
-        #Returns value of the feature_function using feature_vector (weight,bias) in center xn
-        def feature_function(x, feature_vector,xn,rn):
-            x_norm = normalize_coordinate(x, xn, rn)
-            return np.cos(x_norm * feature_vector[0] + feature_vector[1])
-
-        #Returns the value of the first derivative of the feature_function for a point x in xn
-        def first_derivative_feature(x, feature_vector,xn,rn):
-            x_norm = normalize_coordinate(x,xn,rn)
-            return feature_vector[0]*(-np.sin(x_norm * feature_vector[0] + feature_vector[1])) * (1/rn)
-
-        #Returns the value of the second derivative of the feature_function for a point x in xn
-        def second_derivative_feature(x, feature_vector,xn,rn):
-            x_norm = normalize_coordinate(x, xn, rn)
-            return (feature_vector[0]**2)*(-np.cos(x_norm * feature_vector[0] + feature_vector[1])) * ((1/rn)**2)
-
-        #sample points randomly in the domain
-        def collocation_points_interior(I):
-            return np.random.uniform(domain[0], domain[1], I)
-
-        #not being used currently
-        def collocation_points_boundary():
-            return [domain[0], domain[1]]
 
         #calculate values
         centers, radii = centers_radii(N)
@@ -154,17 +175,6 @@ for M in [60]:
         #unsure yet whether to leave rcond or not.
         U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
 
-        #Calculate approximate solution using u_values
-        def approximate_solution(x):
-            total= 0
-            for n in range(len(centers)):
-                pou = psi(x, centers[n], radii)
-                for j in range(0, M):
-                    unj = U[n * M + j]
-                    feature_value = feature_function(x, feature_vectors_list[n][j],centers[n],radii)
-
-                    total += unj* feature_value * pou
-            return total
 
         # We evaluate the found approximation on 300 points
         points = np.linspace(domain[0], domain[1], 300)
@@ -174,10 +184,10 @@ for M in [60]:
         #plot result
         errors = np.abs(np.array(exact) - np.array(approximation))
         error_list.append(np.max(errors))
-        # plt.title("error = {:.10f}".format(np.max(errors)))
-        # plt.plot(points, exact, color="red")
-        # plt.plot(points, approximation, '--', color="blue")
-        # plt.show()
+        plt.title("error = {:.10f}".format(np.max(errors)))
+        plt.plot(points, exact, color="red")
+        plt.plot(points, approximation, '--', color="blue")
+        plt.show()
 
 
     # For convergence study
