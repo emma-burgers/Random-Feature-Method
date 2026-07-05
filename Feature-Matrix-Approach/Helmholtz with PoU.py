@@ -98,6 +98,14 @@ def collocation_points_boundary():
     return [domain[0], domain[1]]
 
 
+# To compute the matrices (defined in notes)
+def P(x, xn, feature_vector, r):
+    return (psi(x, xn, r) * second_derivative_feature(x, feature_vector, xn, r)
+            + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector, xn, r)
+            + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector, xn, r)
+            + lam * psi(x, xn, r) * feature_function(x, feature_vector, xn, r))
+
+
 # Calculate approximate solution using u_values
 def approximate_solution(x):
     total = 0
@@ -135,12 +143,6 @@ for M in [20]:
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
 
-        #To compute the matrices (defined in notes)
-        def P(x, xn, feature_vector, r):
-            return (psi(x, xn, r) * second_derivative_feature(x, feature_vector,xn,r)
-                    + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector,xn,r)
-                    + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector,xn,r)
-                    + lam * psi(x,xn,r) * feature_function(x,feature_vector,xn,r))
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)

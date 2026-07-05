@@ -43,6 +43,9 @@ def second_derivative_feature(x, feature_vector):
 def collocation_points_interior(I):
     return np.random.uniform(domain[0], domain[1], I)
 
+# To compute the matrices
+def P(x, feature_vector):
+    return second_derivative_feature(x, feature_vector) + lam * feature_function(x, feature_vector)
 
 # Calculate approximate solution using u_values
 def approximate_solution(x):
@@ -70,9 +73,6 @@ for M in [80]:
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = generate_feature_vectors(M)
 
-        #To compute the matrices
-        def P(x, feature_vector):
-            return second_derivative_feature(x, feature_vector) + lam * feature_function(x,feature_vector)
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)

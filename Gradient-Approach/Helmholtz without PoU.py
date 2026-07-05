@@ -54,7 +54,7 @@ def approximate_solution(x):
     return total
 
 
-for M in [20]:
+for M in [30]:
     err_list = []
     for i in range(1):
         #set values
