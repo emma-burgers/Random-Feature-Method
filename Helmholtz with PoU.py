@@ -59,7 +59,6 @@ def second_derivative_psi(x, xn, r_n):
     else:
         return 0
 
-
 #Returns a list of random vector '(weight, bias)' for each random feature function
 #weight: Jn weights in [-R, R]^d
 #bias: Jn biases in [-R, R]
@@ -88,76 +87,84 @@ def collocation_points_interior(I):
 def collocation_points_boundary():
     return [domain[0], domain[1]]
 
-M = 20
-N = 3
-Q = M*N*2
-lamB = Q//20
+for M in [20]:
+    err_list = []
+    for i in range(1):
+        N = 3
+        Q = M*N*5
+        lamB = Q//20
 
-#calculate values
-centers, radii = centers_radii(N)
+        #calculate values
+        centers, radii = centers_radii(N)
 
-#For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
+        #For each center, we generate a list of Jn random features vectors (weight,bias)
+        feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
 
-#To compute the matrices
-def P(x, xn, feature_vector, r):
-    return (psi(x, xn, r) * second_derivative_feature(x, feature_vector)
-            + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector)
-            + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector)
-            + lam * psi(x,xn,r) * feature_function(x,feature_vector))
+        #To compute the matrices
+        def P(x, xn, feature_vector, r):
+            return (psi(x, xn, r) * second_derivative_feature(x, feature_vector)
+                    + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector)
+                    + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector)
+                    + lam * psi(x,xn,r) * feature_function(x,feature_vector))
 
-#Initialize matrices to zero
-A = np.zeros((len(centers) * M, len(centers) * M))
-B = np.zeros(len(centers) * M)
+        #Initialize matrices to zero
+        A = np.zeros((len(centers) * M, len(centers) * M))
+        B = np.zeros(len(centers) * M)
 
-#Choose collocation points
-collocation_points = collocation_points_interior(Q)
+        #Choose collocation points
+        collocation_points = collocation_points_interior(Q)
 
-#Compute matrice entries
-for N in range(len(centers)):
-    for J in range(0, M):
-        for n in range(len(centers)):
-            for j in range(0, M):
+        #Compute matrice entries
+        for N in range(len(centers)):
+            for J in range(0, M):
+                for n in range(len(centers)):
+                    for j in range(0, M):
+                        total = 0
+                        for x in collocation_points:
+                            P_nj = P(x, centers[n], feature_vectors_list[n][j], radii)
+                            P_NJ = P(x, centers[N], feature_vectors_list[N][J], radii)
+                            total += 2 * P_nj * P_NJ
+                        A[N * M + J, n * M + j] += total
+                        total = 0
+                        for x in domain:
+                            total += 2* lamB *psi(x,centers[n], radii) * feature_function(x,feature_vectors_list[n][j]) * psi(x,centers[N], radii) * feature_function(x,feature_vectors_list[N][J])
+                        A[N * M + J, n * M + j] += total
                 total = 0
-                for x in collocation_points:
-                    P_nj = P(x, centers[n], feature_vectors_list[n][j], radii)
-                    P_NJ = P(x, centers[N], feature_vectors_list[N][J], radii)
-                    total += 2 * P_nj * P_NJ
-                A[N * M + J, n * M + j] += total
-                total = 0
-                for x in domain:
-                    total += 2* lamB *psi(x,centers[n], radii) * feature_function(x,feature_vectors_list[n][j]) * psi(x,centers[N], radii) * feature_function(x,feature_vectors_list[N][J])
-                A[N * M + J, n * M + j] += total
-        total = 0
-        for xi in collocation_points:
-            P_NJ = P(xi, centers[N], feature_vectors_list[N][J], radii)
-            total += 2 * f(xi) * P_NJ
-        for xb in domain:
-            total += 2 * lamB *u_exact(xb) * psi(xb, centers[N], radii) * feature_function(xb, feature_vectors_list[N][J])
-        B[N * M + J] = total
+                for xi in collocation_points:
+                    P_NJ = P(xi, centers[N], feature_vectors_list[N][J], radii)
+                    total += 2 * f(xi) * P_NJ
+                for xb in domain:
+                    total += 2 * lamB *u_exact(xb) * psi(xb, centers[N], radii) * feature_function(xb, feature_vectors_list[N][J])
+                B[N * M + J] = total
 
-#Solve to find optimal u_values
-U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
+        #Solve to find optimal u_values
+        U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
-#Calculate approximate solution using u_values
-def approximate_solution(x):
-    total= 0
-    for n in range(len(centers)):
-        pou = psi(x, centers[n], radii)
-        for j in range(0, M):
-            unj = U[n * M + j]
-            feature_value = feature_function(x, feature_vectors_list[n][j])
-            total += unj* feature_value * pou
-    return total
+        #Calculate approximate solution using u_values
+        def approximate_solution(x):
+            total= 0
+            for n in range(len(centers)):
+                pou = psi(x, centers[n], radii)
+                for j in range(0, M):
+                    unj = U[n * M + j]
+                    feature_value = feature_function(x, feature_vectors_list[n][j])
+                    total += unj* feature_value * pou
+            return total
 
-points = np.linspace(domain[0], domain[1], 300)
-approximation = [approximate_solution(x) for x in points]
-exact = [u_exact(x) for x in points]
+        points = np.linspace(domain[0], domain[1], 300)
+        approximation = [approximate_solution(x) for x in points]
+        exact = [u_exact(x) for x in points]
 
-errors = np.abs(np.array(exact) - np.array(approximation))
-print(np.max(errors))
+        errors = np.abs(np.array(exact) - np.array(approximation))
+        err_list.append(np.max(errors))
+        plt.title("error = {:.10f}".format(np.max(errors)))
+        plt.plot(points, exact, color="red")
+        plt.plot(points, approximation, '--', color="blue")
+        plt.show()
 
-plt.title("error = {:.10f}".format(np.max(errors)))
-plt.plot(points, exact, color="red")
-plt.plot(points, approximation, '--', color="blue")
-plt.show()
+    print("error run " + str(M))
+    print(np.mean(err_list))
+    print("variance run " + str(M))
+    print(np.var(err_list))
+
+

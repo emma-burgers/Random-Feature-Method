@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-domain = [0,10]
+domain = [0,6]
 
 lam = 30
 
@@ -38,69 +38,74 @@ def second_derivative_feature(x, feature_vector):
 def collocation_points_interior(I):
     return np.random.uniform(domain[0], domain[1], I)
 
-#set values
-M = 40
-lamB = 1
-Q = 80
+for M in [20]:
+    err_list = []
+    for i in range(1):
+        #set values
+        Q = 5*M
+        lamB = Q//20
 
-#For each center, we generate a list of Jn random features vectors (weight,bias)
-feature_vectors_list = generate_feature_vectors(M)
+        #For each center, we generate a list of Jn random features vectors (weight,bias)
+        feature_vectors_list = generate_feature_vectors(M)
 
-#To compute the matrices
-def P(x, feature_vector):
-    return second_derivative_feature(x, feature_vector) + lam * feature_function(x,feature_vector)
+        #To compute the matrices
+        def P(x, feature_vector):
+            return second_derivative_feature(x, feature_vector) + lam * feature_function(x,feature_vector)
 
-#Initialize matrices to zero
-A = np.zeros((M, M))
-B = np.zeros(M)
+        #Initialize matrices to zero
+        A = np.zeros((M, M))
+        B = np.zeros(M)
 
-#Choose collocation points
-collocation_points = collocation_points_interior(Q)
+        #Choose collocation points
+        collocation_points = collocation_points_interior(Q)
 
-#Compute matrice entries
-for J in range(0, M):
-        for j in range(0, M):
+        #Compute matrice entries
+        for J in range(0, M):
+                for j in range(0, M):
+                    total = 0
+                    for x in collocation_points:
+                        P_nj = P(x, feature_vectors_list[j])
+                        P_NJ = P(x, feature_vectors_list[J])
+                        total += 2 * P_nj * P_NJ
+                    for xb in domain:
+                        total += 2 *lamB* feature_function(xb,feature_vectors_list[j]) *feature_function(xb,feature_vectors_list[J])
+                    A[J,  j] = total
+
+                total = 0
+                for xi in collocation_points:
+                    P_NJ = P(xi, feature_vectors_list[J])
+                    total += 2 * f(xi) * P_NJ
+                for xb in domain:
+                    total += 2*lamB * u_exact(xb) * feature_function(xb, feature_vectors_list[J])
+                B[J] = total
+
+        #Solve to find optimal u_values
+        U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
+
+        #Calculate approximate solution using u_values
+        def approximate_solution(x):
             total = 0
-            for x in collocation_points:
-                P_nj = P(x, feature_vectors_list[j])
-                P_NJ = P(x, feature_vectors_list[J])
-                total += 2 * P_nj * P_NJ
-            for xb in domain:
-                total += 2 *lamB* feature_function(xb,feature_vectors_list[j]) *feature_function(xb,feature_vectors_list[J])
-            A[J,  j] = total
+            subsum = 0
+            for j in range(0, M):
+                unj = U[j]
+                feature_value = feature_function(x, feature_vectors_list[j])
+                subsum += unj* feature_value
+            total +=  subsum
+            return total
 
-        total = 0
-        for xi in collocation_points:
-            P_NJ = P(xi, feature_vectors_list[J])
-            total += 2 * f(xi) * P_NJ
-        for xb in domain:
-            total += 2*lamB * u_exact(xb) * feature_function(xb, feature_vectors_list[J])
-        B[J] = total
+        points = np.linspace(domain[0], domain[1], 300)
+        approximation = [approximate_solution(x) for x in points]
+        exact = [u_exact(x) for x in points]
 
-#Solve to find optimal u_values
-U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
+        errors = np.abs(np.array(exact) - np.array(approximation))
+        max_error = np.max(errors)
+        err_list.append(max_error)
 
-#Calculate approximate solution using u_values
-def approximate_solution(x):
-    total = 0
-    subsum = 0
-    for j in range(0, M):
-        unj = U[j]
-        feature_value = feature_function(x, feature_vectors_list[j])
-        subsum += unj* feature_value
-    total +=  subsum
-    return total
-
-points = np.linspace(domain[0], domain[1], 300)
-approximation = [approximate_solution(x) for x in points]
-exact = [u_exact(x) for x in points]
-
-errors = np.abs(np.array(exact) - np.array(approximation))
-max_error = np.max(errors)
-print(max_error)
-
-
-plt.title("error = {:.10f}".format(np.max(errors)))
-plt.plot(points, exact, color="red")
-plt.plot(points, approximation, '--', color="blue")
-plt.show()
+        plt.title("error = {:.10f}".format(np.max(errors)))
+        plt.plot(points, exact, color="red")
+        plt.plot(points, approximation, '--', color="blue")
+        plt.show()
+    print("error run " + str(M))
+    print(np.mean(err_list))
+    print("variance run " + str(M))
+    print(np.var(err_list))
