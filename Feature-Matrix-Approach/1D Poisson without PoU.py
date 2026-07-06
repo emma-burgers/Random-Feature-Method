@@ -43,7 +43,7 @@ def approximate_solution(x):
     return total
 
 #Set number of features M
-for M in [5]:
+for M in [10]:
     err = []
     for k in range(1):
         Q = 2*M
