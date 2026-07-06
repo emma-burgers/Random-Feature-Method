@@ -10,7 +10,6 @@ def f(x):
     return 26 * np.sin(2 * x) + 5 * np.cos(5 * x)
 
 
-# We have two centers at 0 and 10, with radius 5
 def centers_radii(N):
     centers = np.linspace(domain[0], domain[1], num=N)
     return centers, (centers[1] - centers[0]) / 2
@@ -62,12 +61,10 @@ def second_derivative_psi(x, xn, r_n):
 
 
 # Returns a list of random vector '(weight, bias)' for each random feature function
-# weight: Jn weights in [-R, R]^d
-# bias: Jn biases in [-R, R]
-def generate_feature_vectors(Jn, R):
-    weights = np.random.uniform(-8, 8, size=Jn)
-    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
-    return [[weights[i], biases[i]] for i in range(Jn)]
+def generate_feature_vectors(m):
+    weights = np.random.uniform(-8, 8, size=m)
+    biases = np.random.uniform(-np.pi, np.pi, size=m)
+    return [[weights[i], biases[i]] for i in range(m)]
 
 
 # Returns value of the feature_function using feature_vector (weight,bias) in center xn
@@ -113,8 +110,7 @@ def approximate_solution(x):
         pou = psi(x, centers[n], radii)
         for j in range(0, M):
             unj = U[n * M + j]
-            feature_value = feature_function(x, feature_vectors_list[n][j], centers[n], radii)
-
+            feature_value = feature_function(x, feature_vectors_list[j], centers[n], radii)
             total += unj * feature_value * pou
     return total
 
@@ -128,7 +124,7 @@ for M in [20]:
         domain = [0,20]
         N = 10
 
-        Q = M * N * 2
+        Q = M * N * 5
 
         #Scaling of the boundary contribution
         lamB = Q // 20
@@ -141,8 +137,7 @@ for M in [20]:
         centers, radii = centers_radii(N)
 
         #For each center, we generate a list of Jn random features vectors (weight,bias)
-        feature_vectors_list = [generate_feature_vectors(M, radii) for i in centers]
-
+        feature_vectors_list = generate_feature_vectors(M)
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)
@@ -161,7 +156,7 @@ for M in [20]:
         for i, x in enumerate(collocation_points):
             for n in range(N_centers):
                 for j in range(M):
-                    A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[n][j], radii)
+                    A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[j], radii)
             f_vec[i] = f(x)
 
         # Boundary rows — one row per boundary point
@@ -169,12 +164,10 @@ for M in [20]:
             for n in range(N_centers):
                 for j in range(M):
                     A_feat[Q + k, n * M + j] =  np.sqrt(lamB) *(psi(xb, centers[n], radii)
-                            * feature_function(xb, feature_vectors_list[n][j], centers[n], radii)
+                            * feature_function(xb, feature_vectors_list[j], centers[n], radii)
                     )
             f_vec[Q + k] = np.sqrt(lamB) *u_exact(xb)
 
-
-        #unsure yet whether to leave rcond or not.
         U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
 
 

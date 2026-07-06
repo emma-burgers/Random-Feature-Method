@@ -56,24 +56,28 @@ def second_derivative_psi(x, xn, r_n):
         return 0
 
 #Returns a list of random vector '(weight, bias)' for each random feature function
-#weight: Jn weights in [-R, R]^d
-#bias: Jn biases in [-R, R]
-def generate_feature_vectors(Jn, R):
-    weights = np.random.uniform(-0.5, 0.5 , size=Jn)
-    biases = np.random.uniform(-1, 1, size=Jn)
-    return [[weights[i], biases[i]] for i in range(Jn)]
+def generate_feature_vectors(m):
+    weights = np.random.uniform(-5, 5 , size=m)
+    biases = np.random.uniform(-1, 1, size=m)
+    return [[weights[i], biases[i]] for i in range(m)]
 
-#Returns value of the feature_function using feature_vector (weight,bias) in center xn
-def feature_function(x, feature_vector):
+#Evaluate feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def feature_function(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
     return np.tanh(x * feature_vector[0] + feature_vector[1])
 
-#Returns the value of the first derivative of the feature_function for a point x in xn
-def first_derivative_feature(x, feature_vector):
-    return feature_vector[0]*(1-np.tanh(feature_vector[0] * x  + feature_vector[1])**2)
 
-#Returns the value of the second derivative of the feature_function for a point x in xn
-def second_derivative_feature(x, feature_vector):
-    return feature_vector[0]**2*(-2*np.tanh(feature_vector[0]* x+ feature_vector[1]) * (1-np.tanh(feature_vector[0] *x + feature_vector[1])**2))
+#Evaluate first derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_feature(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
+    return feature_vector[0] * (1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2) * (1 / r)
+
+
+#Evaluate second derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_feature(x, feature_vector, c, r):
+    x = normalize_coordinate(x, c, r)
+    return feature_vector[0] ** 2 * (-2 * np.tanh(feature_vector[0] * x + feature_vector[1]) * (
+            1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2)) * ((1 / r) ** 2)
 
 #sample points randomly in the domain
 def collocation_points_interior(I):
@@ -87,7 +91,7 @@ def approximate_solution(x):
         subsum = 0
         for j in range(0, M):
             unj = U[n * M + j]
-            feature_value = feature_function(x, feature_vectors_list[n][j])
+            feature_value = feature_function(x, feature_vectors_list[j],centers[n],radii)
             subsum += unj * feature_value
         total += pou * subsum
     return total
@@ -106,13 +110,13 @@ for M in [10]:
         Mp = len(centers)
 
         #For each center, we generate a list of Jn random features vectors (weight,bias)
-        feature_vectors_list = [generate_feature_vectors(M, radii) for i in range(Mp)]
+        feature_vectors_list = generate_feature_vectors(M)
 
         #To compute the matrices
         def P(x, xn, feature_vector, r):
-            return (psi(x, xn, r) * second_derivative_feature(x, feature_vector)
-                    + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector)
-                    + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector))
+            return (psi(x, xn, r) * second_derivative_feature(x, feature_vector,xn,r)
+                    + 2 * first_derivative_psi(x, xn, r) * first_derivative_feature(x, feature_vector,xn,r)
+                    + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector,xn,r))
 
         #Initialize matrices to zero
         A = np.zeros((Mp * M, Mp * M))
@@ -128,19 +132,19 @@ for M in [10]:
                     for j in range(0, M):
                         total = 0
                         for x in collocation_points:
-                            P_nj = P(x, centers[n], feature_vectors_list[n][j], radii)
-                            P_NJ = P(x, centers[N], feature_vectors_list[N][J], radii)
+                            P_nj = P(x, centers[n], feature_vectors_list[j], radii)
+                            P_NJ = P(x, centers[N], feature_vectors_list[J], radii)
                             total += 2 * P_nj * P_NJ
                         for xb in domain:
-                            total += 2 * psi(xb,centers[n], radii) * feature_function(xb,feature_vectors_list[n][j]) * psi(xb,centers[N], radii)*feature_function(xb,feature_vectors_list[N][J])
+                            total += 2 * psi(xb,centers[n], radii) * feature_function(xb,feature_vectors_list[j],centers[n],radii) * psi(xb,centers[N], radii)*feature_function(xb,feature_vectors_list[J],centers[N],radii)
                         A[N * M + J, n * M + j] = total
 
                 total = 0
                 for xi in collocation_points:
-                    P_NJ = P(xi, centers[N], feature_vectors_list[N][J], radii)
+                    P_NJ = P(xi, centers[N], feature_vectors_list[J], radii)
                     total += 2 * f(xi) * P_NJ
                 for xb in domain:
-                    total += 2 * u_exact(xb) * psi(xb, centers[N],radii) * feature_function(xb, feature_vectors_list[N][J])
+                    total += 2 * u_exact(xb) * psi(xb, centers[N],radii) * feature_function(xb, feature_vectors_list[J],centers[N],radii)
                 B[N * M + J] = total
 
         #Solve to find optimal u_values

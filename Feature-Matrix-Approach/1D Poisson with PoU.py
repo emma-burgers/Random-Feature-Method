@@ -96,7 +96,7 @@ def approximate_solution(x):
         pou = psi(x, centers[n], radii)
         for j in range(0, M):
             unj = U[n * M + j]
-            feature_value = feature_function(x, feature_vectors_list[n][j], centers[n], radii)
+            feature_value = feature_function(x, feature_vectors_list[j], centers[n], radii)
             total += unj * feature_value * pou
     return total
 
@@ -109,13 +109,13 @@ def P(x, xn, feature_vector, r):
 
 
 # Choose number of features M, number of collocation points Q, and number of subdomains N
-for M in [20]:
+for M in [40]:
     error_list = []
 
     # Number of iterations for convergence study
-    for i in range(1):
+    for i in range(2):
         N=2
-        Q =2*N*M
+        Q =5*N*M
 
         #Scaling of the boundary contribution
         lamB = Q//10
@@ -124,7 +124,7 @@ for M in [20]:
         centers, radii = centers_radii(N)
 
         #Generate M features per center
-        feature_vectors_list = [generate_feature_vectors(M) for i in centers]
+        feature_vectors_list = generate_feature_vectors(M)
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)
@@ -138,18 +138,18 @@ for M in [20]:
         A_feat = np.zeros((Q + len(boundary_points), N_cols))
         f_vec = np.zeros(Q + len(boundary_points))
 
-
         for i, x in enumerate(collocation_points):
             for n in range(N_centers):
                 for j in range(M):
-                    A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[n][j], radii)
+                    A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[j], radii)
             f_vec[i] = f(x)
 
         for k, xb in enumerate(boundary_points):
             for n in range(N_centers):
                 for j in range(M):
-                    A_feat[Q + k, n * M + j] =   np.sqrt(lamB) * psi(xb, centers[n], radii) * feature_function(xb, feature_vectors_list[n][j], centers[n], radii)
+                    A_feat[Q + k, n * M + j] =   np.sqrt(lamB) * psi(xb, centers[n], radii) * feature_function(xb, feature_vectors_list[j], centers[n], radii)
             f_vec[Q + k] =  np.sqrt(lamB) * u_exact(xb)
+        print(np.linalg.cond(A_feat))
 
         U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
 
@@ -161,10 +161,11 @@ for M in [20]:
         #plot result
         errors = np.abs(np.array(exact) - np.array(approximation))
         error_list.append(np.max(errors))
-        plt.title("error = {:.10f}".format(np.max(errors)))
-        plt.plot(points, exact, color="red")
-        plt.plot(points, approximation, '--', color="blue")
-        plt.show()
+        # plt.title("error = {:.10f}".format(np.max(errors)))
+        # plt.plot(points, exact, color="red")
+        # plt.plot(points, approximation, '--', color="blue")
+        # plt.show()
+
 
     print("mean error " + str(M) )
     print(np.mean(error_list))
