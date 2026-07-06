@@ -19,13 +19,12 @@ def centers_radii(N):
     return centers, (centers[1] - centers[0]) / 2
 
 # Normalize 'x' with respect to center 'c' and radius 'r'
-def normalize_coordinate(x,xn,r_n):
-    return (x-xn)/r_n
-
+def normalize_coordinate(x,c,r):
+    return (x-c)/r
 
 # Evaluate PoU function for 'x' in subdomain with center 'c' and radius 'r'
-def psi(x, xn, radii):
-    x_norm = normalize_coordinate(x, xn, radii)
+def psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5/4 <= x_norm < -3/4:
         return (1 + np.sin(2 * np.pi * x_norm)) / 2
@@ -68,7 +67,6 @@ def generate_feature_vectors(m):
     weights = np.random.uniform(-8, 8, size=m)
     biases = np.random.uniform(-np.pi, np.pi, size=m)
     return [[weights[i], biases[i]] for i in range(m)]
-
 
 
 #Evaluate feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
@@ -116,7 +114,7 @@ for M in [20]:
     err_list = []
     for i in range(1):
         N = 3
-        Q = M*N*2
+        Q = (M*N*2)-2
 
         # Scaling of the boundary contribution
         lamB = Q//20

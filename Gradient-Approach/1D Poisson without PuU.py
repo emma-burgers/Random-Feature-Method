@@ -45,7 +45,7 @@ for M in [20]:
     err_list = []
     # Number of iterations i
     for i in range(1):
-        Q = M * 5
+        Q = (M * 5) -2
         lamB = Q//10
 
         # Generate M parameter vectors

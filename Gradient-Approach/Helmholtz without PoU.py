@@ -58,7 +58,7 @@ for M in [30]:
     err_list = []
     for i in range(1):
         #set values
-        Q = 5*M
+        Q = (2*M)-2
         lamB = Q//20
 
         #For each center, we generate a list of Jn random features vectors (weight,bias)

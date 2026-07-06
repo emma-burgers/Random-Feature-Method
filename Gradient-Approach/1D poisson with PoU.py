@@ -3,22 +3,27 @@ import matplotlib.pyplot as plt
 
 domain = [0,1]
 
+# exact solution to PDE
 def u_exact(x):
     return -1/2 * x * (1-x)
 
+#forcing term of PDE
 def f(x):
     return 1
 
+# Compute N centers and the radius
 def centers_radii(N):
     centers = np.linspace(domain[0], domain[1], num=N)
     return centers, (centers[1] - centers[0]) / 2
 
-def normalize_coordinate(x,xn,r_n):
-    return (x-xn)/r_n
+# Normalize 'x' with respect to center 'c' and radius 'r'
+def normalize_coordinate(x,c,r):
+    return (x-c)/r
 
-#Returns POU value of x in center xn
-def psi(x, xn, r_n):
-    x_norm = normalize_coordinate(x, xn, r_n)
+
+# Evaluate PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5/4 <= x_norm < -3/4:
         return (1 + np.sin(2 * np.pi * x_norm)) / 2
@@ -29,33 +34,33 @@ def psi(x, xn, r_n):
     else:
         return 0
 
-#Returns value of the first derivative of the POU in x
-def first_derivative_psi(x, xn, radii):
-    x_norm = normalize_coordinate(x, xn, radii)
+# Evaluate first derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
     if -5 / 4 <= x_norm < -3 / 4:
-        return (np.pi * np.cos(2 * np.pi * x_norm)) * ( 1 / radii)
+        return (np.pi * np.cos(2 * np.pi * x_norm)) * ( 1 / r)
     elif -3 / 4 <= x_norm < 3 / 4:
         return 0
     elif 3 / 4 <= x_norm < 5 / 4:
-        return (-np.pi * np.cos(2 * np.pi * x_norm)) * ( 1 / radii)
+        return (-np.pi * np.cos(2 * np.pi * x_norm)) * ( 1 / r)
     else:
         return 0
 
 
-#Returns value of the second derivative of the POU in x
-def second_derivative_psi(x, xn, r_n):
-    x_norm = normalize_coordinate(x, xn, r_n)
+# Evaluate second derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_psi(x, c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5 / 4 <= x_norm < -3 / 4:
-        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     elif -3 / 4 <= x_norm < 3 / 4:
         return 0
     elif 3 / 4 <= x_norm < 5 / 4:
-        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     else:
         return 0
 
-#Returns a list of random vector '(weight, bias)' for each random feature function
+#Returns a list of m parameter vectors '(weight, bias)'
 def generate_feature_vectors(m):
     weights = np.random.uniform(-5, 5 , size=m)
     biases = np.random.uniform(-1, 1, size=m)
@@ -79,7 +84,7 @@ def second_derivative_feature(x, feature_vector, c, r):
     return feature_vector[0] ** 2 * (-2 * np.tanh(feature_vector[0] * x + feature_vector[1]) * (
             1 - np.tanh(feature_vector[0] * x + feature_vector[1]) ** 2)) * ((1 / r) ** 2)
 
-#sample points randomly in the domain
+#sample interior collocation points
 def collocation_points_interior(I):
     return np.random.uniform(0, 1, I)
 
@@ -102,7 +107,7 @@ for M in [10]:
     for i in range(1):
         #set values
         N = 2
-        Q = M * N * 5
+        Q = (M * N * 2) -2
         lamB = Q//10
 
         #calculate values
@@ -119,17 +124,17 @@ for M in [10]:
                     + second_derivative_psi(x, xn, r) * feature_function(x, feature_vector,xn,r))
 
         #Initialize matrices to zero
-        A = np.zeros((Mp * M, Mp * M))
-        B = np.zeros(Mp * M)
+        A = np.zeros((N* M, N* M))
+        B = np.zeros(N * M)
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)
 
         #Compute matrice entries
-        for N in range(0,Mp):
-            for J in range(0, M):
-                for n in range(0, Mp ):
-                    for j in range(0, M):
+        for N in range(len(centers)):
+            for J in range(M):
+                for n in range(len(centers)):
+                    for j in range(M):
                         total = 0
                         for x in collocation_points:
                             P_nj = P(x, centers[n], feature_vectors_list[j], radii)
@@ -149,7 +154,6 @@ for M in [10]:
 
         #Solve to find optimal u_values
         U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
-
 
         points = np.linspace(domain[0], domain[1], 300)
         aproximation = [approximate_solution(x) for x in points]
