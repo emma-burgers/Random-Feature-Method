@@ -5,20 +5,25 @@ domain = [0,6]
 
 lam = 30
 
+# exact solution to PDE
 def u_exact(x):
     return np.sin(2*x) + np.cos(5*x)
 
+#forcing term of PDE
 def f(x):
     return 26*np.sin(2*x) + 5*np.cos(5*x)
 
+# Compute N centers and the radius
 def centers_radii(N):
     centers = np.linspace(domain[0], domain[1], num=N)
     return centers, (centers[1] - centers[0]) / 2
 
+# Normalize 'x' with respect to center 'c' and radius 'r'
 def normalize_coordinate(x,xn,r_n):
     return (x-xn)/r_n
 
-#Returns POU value of x in center xn
+
+# Evaluate PoU function for 'x' in subdomain with center 'c' and radius 'r'
 def psi(x, xn, radii):
     x_norm = normalize_coordinate(x, xn, radii)
 
@@ -31,54 +36,57 @@ def psi(x, xn, radii):
     else:
         return 0
 
-#Returns value of the first derivative of the POU in x
-def first_derivative_psi(x, xn, radii):
-    x_norm = normalize_coordinate(x, xn, radii)
+
+# Evaluate first derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_psi(x,c, r):
+    x_norm = normalize_coordinate(x, c, r)
 
     if -5 / 4 <= x_norm < -3 / 4:
-        return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
+        return (np.pi * np.cos(2 * np.pi * x_norm)) * (1 / r)
     elif -3 / 4 <= x_norm < 3 / 4:
         return 0
     elif 3 / 4 <= x_norm < 5 / 4:
-        return (-np.pi * np.cos(2 * np.pi * x_norm)) * (1 / radii)
+        return (-np.pi * np.cos(2 * np.pi * x_norm)) * (1 / r)
     else:
         return 0
 
 
-#Returns value of the second derivative of the POU in x
-def second_derivative_psi(x, xn, r_n):
-    x_norm = normalize_coordinate(x, xn, r_n)
+# Evaluate second derivative of PoU function for 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_psi(x, c, r):
+    x_norm = normalize_coordinate(x,c, r)
     if -5 / 4 <= x_norm < -3 / 4:
-        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (-2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     elif -3 / 4 <= x_norm < 3 / 4:
         return 0
     elif 3 / 4 <= x_norm < 5 / 4:
-        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r_n) ** 2)
+        return (2 * np.pi ** 2 * np.sin(2 * np.pi * x_norm)) * ((1 / r) ** 2)
     else:
         return 0
 
-#Returns a list of m parameter vectors '[(weight, bias)]'
+#Returns a list of m parameter vectors '(weight, bias)'
 def generate_feature_vectors(m):
     weights = np.random.uniform(-8, 8, size=m)
     biases = np.random.uniform(-np.pi, np.pi, size=m)
     return [[weights[i], biases[i]] for i in range(m)]
 
 
-# Returns value of the feature_function using feature_vector (weight,bias) in center xn
-def feature_function(x, feature_vector, xn, rn):
-    x_norm = normalize_coordinate(x, xn, rn)
+
+#Evaluate feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def feature_function(x, feature_vector,c, r):
+    x_norm = normalize_coordinate(x, c, r)
     return np.cos(x_norm * feature_vector[0] + feature_vector[1])
 
-# Returns the value of the first derivative of the feature_function for a point x in xn
-def first_derivative_feature(x, feature_vector, xn, rn):
-    x_norm = normalize_coordinate(x, xn, rn)
-    return feature_vector[0] * (-np.sin(x_norm * feature_vector[0] + feature_vector[1])) * (1 / rn)
 
-# Returns the value of the second derivative of the feature_function for a point x in xn
-def second_derivative_feature(x, feature_vector, xn, rn):
-    x_norm = normalize_coordinate(x, xn, rn)
-    return (feature_vector[0] ** 2) * (-np.cos(x_norm * feature_vector[0] + feature_vector[1])) * ((1 / rn) ** 2)
+#Evaluate first derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def first_derivative_feature(x, feature_vector, c, r):
+    x_norm = normalize_coordinate(x, c, r)
+    return feature_vector[0] * (-np.sin(x_norm * feature_vector[0] + feature_vector[1])) * (1 / r)
 
+
+#Evaluate first derivative feature function with parameters 'feature vector' at 'x' in subdomain with center 'c' and radius 'r'
+def second_derivative_feature(x, feature_vector, c, r):
+    x_norm = normalize_coordinate(x, c, r)
+    return (feature_vector[0] ** 2) * (-np.cos(x_norm * feature_vector[0] + feature_vector[1])) * ((1 / r) ** 2)
 
 #sample interior collocation points
 def collocation_points_interior(I):
@@ -103,31 +111,34 @@ def approximate_solution(x):
     return total
 
 
+# Choose number of features M, number of collocation points Q, and number of subdomains N
 for M in [20]:
     err_list = []
     for i in range(1):
         N = 3
         Q = M*N*2
+
+        # Scaling of the boundary contribution
         lamB = Q//20
 
-        #calculate values
+        #Find centers and radius based on N
         centers, radii = centers_radii(N)
 
-        #For each center, we generate a list of Jn random features vectors (weight,bias)
+        #Generate M features
         feature_vectors_list = generate_feature_vectors(M)
 
-        #Initialize matrices to zero
-        A = np.zeros((len(centers) * M, len(centers) * M))
-        B = np.zeros(len(centers) * M)
+        #Initialize matrices
+        A = np.zeros((N* M , N * M))
+        B = np.zeros(N * M)
 
         #Choose collocation points
         collocation_points = collocation_points_interior(Q)
 
         #Compute matrice entries
         for N in range(len(centers)):
-            for J in range(0, M):
+            for J in range(M):
                 for n in range(len(centers)):
-                    for j in range(0, M):
+                    for j in range(M):
                         total = 0
                         for x in collocation_points:
                             P_nj = P(x, centers[n], feature_vectors_list[j], radii)
@@ -149,6 +160,7 @@ for M in [20]:
         #Solve to find optimal coefficients U
         U, _, _, _ = np.linalg.lstsq(A, B, rcond=None)
 
+        #Compute error
         points = np.linspace(domain[0], domain[1], 300)
         approximation = [approximate_solution(x) for x in points]
         exact = [u_exact(x) for x in points]

@@ -10,6 +10,9 @@ def f(x):
     return 26 * np.sin(2 * x) + 5 * np.cos(5 * x)
 
 
+# lambda parameter in the PDE
+lam = 30
+
 def centers_radii(N):
     centers = np.linspace(domain[0], domain[1], num=N)
     return centers, (centers[1] - centers[0]) / 2
@@ -124,14 +127,10 @@ for M in [20]:
         domain = [0,20]
         N = 10
 
-        Q = M * N * 5
+        Q = M * N * 2
 
         #Scaling of the boundary contribution
         lamB = Q // 20
-
-        # lambda parameter in the PDE
-        lam = 30
-
 
         #calculate values
         centers, radii = centers_radii(N)
@@ -140,35 +139,29 @@ for M in [20]:
         feature_vectors_list = generate_feature_vectors(M)
 
         #Choose collocation points
-        collocation_points = collocation_points_interior(Q)
+        collocation_points = collocation_points_interior(Q-2)
 
-        #Compute matrice entries
-        N_centers = len(centers)
-        N_cols = N_centers * M
-        boundary_points = domain  # [0, 10]
+        #Initialize matrices
+        A_feat = np.zeros((Q, N*M))
+        B_forc = np.zeros(Q)
 
-        # Feature matrix rows: Q interior + 2 boundary
-        A_feat = np.zeros((Q + len(boundary_points), N_cols))
-        f_vec = np.zeros(Q + len(boundary_points))
-
-
-        # Interior rows — one row per collocation point
-        for i, x in enumerate(collocation_points):
-            for n in range(N_centers):
+        #interior equations
+        for i, xi in enumerate(collocation_points):
+            for n in range(N):
                 for j in range(M):
-                    A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[j], radii)
-            f_vec[i] = f(x)
+                    A_feat[i, n * M + j] = P(xi, centers[n], feature_vectors_list[j], radii)
+            B_forc[i] = f(xi)
 
-        # Boundary rows — one row per boundary point
-        for k, xb in enumerate(boundary_points):
-            for n in range(N_centers):
+        # boundary equations
+        for k, xb in enumerate(domain):
+            for n in range(N):
                 for j in range(M):
-                    A_feat[Q + k, n * M + j] =  np.sqrt(lamB) *(psi(xb, centers[n], radii)
+                    A_feat[(Q-2) + k, n * M + j] =  np.sqrt(lamB) *(psi(xb, centers[n], radii)
                             * feature_function(xb, feature_vectors_list[j], centers[n], radii)
                     )
-            f_vec[Q + k] = np.sqrt(lamB) *u_exact(xb)
+            B_forc[(Q - 2) + k] = np.sqrt(lamB) * u_exact(xb)
 
-        U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
+        U, _, _, _ = np.linalg.lstsq(A_feat, B_forc, rcond=None)
 
 
         # We evaluate the found approximation on 300 points

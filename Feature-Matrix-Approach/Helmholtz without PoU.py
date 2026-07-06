@@ -8,17 +8,14 @@ def u_exact(x):
 def f(x):
     return 26 * np.sin(2 * x) + 5 * np.cos(5 * x)
 
-
 def normalize_coordinate(x, xn, r_n):
     return (x - xn) / r_n
 
-# Returns a list of random vector '(weight, bias)' for each random feature function, most optimal:-7.2,7.2
-# weight: Jn weights in [-R, R]^d
-# bias: Jn biases in [-R, R]
-def generate_feature_vectors(Jn):
-    weights = np.random.uniform(-8, 8, size=Jn)
-    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
-    return [[weights[i], biases[i]] for i in range(Jn)]
+# Returns a list of random vector '(weight, bias)' for each random feature function
+def generate_feature_vectors(m):
+    weights = np.random.uniform(-8, 8, size=m)
+    biases = np.random.uniform(-np.pi, np.pi, size=m)
+    return [[weights[i], biases[i]] for i in range(m)]
 
 
 # Returns value of the feature_function using feature_vector (weight,bias) in center xn
@@ -63,31 +60,31 @@ for M in [80]:
 
         lam = 30
 
-        # Since N=1, we use Q=M*1*5
         Q = M*5
         lamB = Q // 20
 
-        #For each center, we generate a list of Jn random features vectors (weight,bias)
+        # Generate M features
         feature_vectors_list = generate_feature_vectors(M)
 
 
         #Choose collocation points
-        collocation_points = collocation_points_interior(Q)
+        collocation_points = collocation_points_interior(Q-2)
 
-        A_feat = np.zeros((Q + 2, M))
-        f_vec = np.zeros(Q + 2)
+        #Initialize matrices
+        A_feat = np.zeros((Q, M))
+        f_vec = np.zeros(Q)
 
+        #Interior equations
         for i, x in enumerate(collocation_points):
             for j in range(M):
                 A_feat[i, j] = P(x, feature_vectors_list[j])
             f_vec[i] = f(x)
 
-        # Boundary rows
+        # Boundary equations
         for k, xb in enumerate(domain):
             for j in range(M):
-                A_feat[Q + k, j] = np.sqrt(lamB) * feature_function(xb, feature_vectors_list[j])
-            f_vec[Q + k] = np.sqrt(lamB) * u_exact(xb)
-
+                A_feat[(Q-2) + k, j] = np.sqrt(lamB) * feature_function(xb, feature_vectors_list[j])
+            f_vec[(Q-2) + k] = np.sqrt(lamB) * u_exact(xb)
 
         U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
 
@@ -99,7 +96,7 @@ for M in [80]:
         max_error = np.max(errors)
         err_list.append(max_error)
 
-        #plot graph
+        #plot result
         plt.title("error = {:.10f}".format(np.max(errors)))
         plt.plot(points, exact, color="red")
         plt.plot(points, approximation, '--', color="blue")

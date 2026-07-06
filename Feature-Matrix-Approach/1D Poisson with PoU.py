@@ -120,38 +120,37 @@ for M in [40]:
         #Scaling of the boundary contribution
         lamB = Q//10
 
-        #calculate values
+        #Find centers and radius based on N
         centers, radii = centers_radii(N)
 
-        #Generate M features per center
+        #Generate M features
         feature_vectors_list = generate_feature_vectors(M)
 
         #Choose collocation points
-        collocation_points = collocation_points_interior(Q)
+        collocation_points = collocation_points_interior(Q-2)
 
         #Compute matrice entries
-        N_centers = len(centers)
-        N_cols = N_centers * M
+        N_cols = N * M
         boundary_points = domain
 
-        # Feature matrix rows: Q interior + 2 boundary
-        A_feat = np.zeros((Q + len(boundary_points), N_cols))
-        f_vec = np.zeros(Q + len(boundary_points))
+        # Initializee feature matrix and forcing term matrix
+        A_feat = np.zeros((Q , N*M))
+        B_forc = np.zeros(Q)
 
         for i, x in enumerate(collocation_points):
-            for n in range(N_centers):
+            for n in range(N):
                 for j in range(M):
                     A_feat[i, n * M + j] = P(x, centers[n], feature_vectors_list[j], radii)
-            f_vec[i] = f(x)
+            B_forc[i] = f(x)
 
         for k, xb in enumerate(boundary_points):
-            for n in range(N_centers):
+            for n in range(N):
                 for j in range(M):
-                    A_feat[Q + k, n * M + j] =   np.sqrt(lamB) * psi(xb, centers[n], radii) * feature_function(xb, feature_vectors_list[j], centers[n], radii)
-            f_vec[Q + k] =  np.sqrt(lamB) * u_exact(xb)
+                    A_feat[(Q-2) + k, n * M + j] =   np.sqrt(lamB) * psi(xb, centers[n], radii) * feature_function(xb, feature_vectors_list[j], centers[n], radii)
+            B_forc[(Q - 2) + k] = np.sqrt(lamB) * u_exact(xb)
         print(np.linalg.cond(A_feat))
 
-        U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
+        U, _, _, _ = np.linalg.lstsq(A_feat, B_forc, rcond=None)
 
         # We evaluate the found approximation on 300 points
         points = np.linspace(domain[0], domain[1], 300)
@@ -161,10 +160,10 @@ for M in [40]:
         #plot result
         errors = np.abs(np.array(exact) - np.array(approximation))
         error_list.append(np.max(errors))
-        # plt.title("error = {:.10f}".format(np.max(errors)))
-        # plt.plot(points, exact, color="red")
-        # plt.plot(points, approximation, '--', color="blue")
-        # plt.show()
+        plt.title("error = {:.10f}".format(np.max(errors)))
+        plt.plot(points, exact, color="red")
+        plt.plot(points, approximation, '--', color="blue")
+        plt.show()
 
 
     print("mean error " + str(M) )
