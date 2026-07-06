@@ -15,12 +15,10 @@ def normalize_coordinate(x,xn,r_n):
     return (x-xn)/r_n
 
 #Returns a list of random vector '(weight, bias)' for each random feature function
-#weight: Jn weights in [-R, R]^d
-#bias: Jn biases in [-R, R]
-def generate_feature_vectors(Jn):
-    weights = np.random.uniform(-8, 8, size=Jn)
-    biases = np.random.uniform(-np.pi, np.pi, size=Jn)
-    return [[weights[i], biases[i]] for i in range(Jn)]
+def generate_feature_vectors(m):
+    weights = np.random.uniform(-8, 8, size=m)
+    biases = np.random.uniform(-np.pi, np.pi, size=m)
+    return [[weights[i], biases[i]] for i in range(m)]
 
 #Returns value of the feature_function using feature_vector (weight,bias) in center xn
 def feature_function(x, feature_vector):
