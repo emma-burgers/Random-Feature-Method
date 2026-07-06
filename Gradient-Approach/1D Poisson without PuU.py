@@ -59,8 +59,8 @@ for M in [20]:
         collocation_points = collocation_points_interior(Q)
 
         #Compute matrice entries
-        for J in range(0,M):
-            for j in range(0, M):
+        for J in range(M):
+            for j in range(M):
                     total = 0
                     for x in collocation_points:
                         P_j = second_derivative_feature(x,  feature_vectors_list[j])

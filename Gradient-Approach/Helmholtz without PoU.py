@@ -64,7 +64,6 @@ for M in [30]:
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = generate_feature_vectors(M)
 
-
         #Initialize matrices to zero
         A = np.zeros((M, M))
         B = np.zeros(M)
