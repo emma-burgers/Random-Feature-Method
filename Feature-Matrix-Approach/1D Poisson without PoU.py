@@ -74,16 +74,16 @@ for M in [5]:
         U, _, _, _ = np.linalg.lstsq(A_feat, f_vec, rcond=None)
 
         points = np.linspace(domain[0], domain[1], 300)
-        aproximation = [approximate_solution(x) for x in points]
+        approximation = [approximate_solution(x) for x in points]
         exact = [u_exact(x) for x in points]
 
-        errors = np.abs(np.array(exact) - np.array(aproximation))
+        errors = np.abs(np.array(exact) - np.array(approximation))
         err.append(np.max(errors))
 
         # plot result
         plt.title("error = {:.10f}".format(np.max(errors)))
         plt.plot(points, exact, color="red")
-        plt.plot(points, aproximation, '--', color="blue")
+        plt.plot(points, approximation, '--', color="blue")
         plt.show()
 
     print("mean error " + str(M) )
