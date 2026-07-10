@@ -113,7 +113,7 @@ for M in [40]:
     error_list = []
 
     # Number of iterations for convergence study
-    for i in range(2):
+    for i in range(1):
         N=2
         Q =5*N*M
 

@@ -62,7 +62,7 @@ def second_derivative_psi(x, c, r):
 
 #Returns a list of m parameter vectors '(weight, bias)'
 def generate_feature_vectors(m):
-    weights = np.random.uniform(-5, 5 , size=m)
+    weights = np.random.uniform(-0.5, 0.5 , size=m)
     biases = np.random.uniform(-1, 1, size=m)
     return [[weights[i], biases[i]] for i in range(m)]
 
@@ -91,7 +91,7 @@ def collocation_points_interior(I):
 # Calculate approximate solution using u_values
 def approximate_solution(x):
     total = 0
-    for n in range(0, Mp):
+    for n in range(0, len(centers)):
         pou = psi(x, centers[n], radii)
         subsum = 0
         for j in range(0, M):
@@ -112,7 +112,6 @@ for M in [10]:
 
         #calculate values
         centers, radii = centers_radii(N)
-        Mp = len(centers)
 
         #For each center, we generate a list of Jn random features vectors (weight,bias)
         feature_vectors_list = generate_feature_vectors(M)
@@ -141,7 +140,7 @@ for M in [10]:
                             P_NJ = P(x, centers[N], feature_vectors_list[J], radii)
                             total += 2 * P_nj * P_NJ
                         for xb in domain:
-                            total += 2 * psi(xb,centers[n], radii) * feature_function(xb,feature_vectors_list[j],centers[n],radii) * psi(xb,centers[N], radii)*feature_function(xb,feature_vectors_list[J],centers[N],radii)
+                            total += 2 * lamB * psi(xb,centers[n], radii) * feature_function(xb,feature_vectors_list[j],centers[n],radii) * psi(xb,centers[N], radii)*feature_function(xb,feature_vectors_list[J],centers[N],radii)
                         A[N * M + J, n * M + j] = total
 
                 total = 0
@@ -149,7 +148,7 @@ for M in [10]:
                     P_NJ = P(xi, centers[N], feature_vectors_list[J], radii)
                     total += 2 * f(xi) * P_NJ
                 for xb in domain:
-                    total += 2 * u_exact(xb) * psi(xb, centers[N],radii) * feature_function(xb, feature_vectors_list[J],centers[N],radii)
+                    total += 2 * u_exact(xb) * lamB * psi(xb, centers[N],radii) * feature_function(xb, feature_vectors_list[J],centers[N],radii)
                 B[N * M + J] = total
 
         #Solve to find optimal u_values
