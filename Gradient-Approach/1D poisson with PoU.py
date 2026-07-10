@@ -107,7 +107,7 @@ for M in [10]:
     for i in range(1):
         #set values
         N = 2
-        Q = (M * N * 2) -2
+        Q = (M * N * 5) -2
         lamB = Q//10
 
         #calculate values
