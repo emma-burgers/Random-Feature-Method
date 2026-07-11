@@ -102,7 +102,7 @@ def approximate_solution(x):
     total = 0
     for n in range(len(centers)):
         pou = psi(x, centers[n], radii)
-        for j in range(0, M):
+        for j in range(M):
             unj = U[n * M + j]
             feature_value = feature_function(x, feature_vectors_list[j],centers[n],radii)
             total += unj * feature_value * pou

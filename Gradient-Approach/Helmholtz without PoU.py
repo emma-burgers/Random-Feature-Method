@@ -44,7 +44,7 @@ def P(x, feature_vector):
 def approximate_solution(x):
     total = 0
     subsum = 0
-    for j in range(0, M):
+    for j in range(M):
         unj = U[j]
         feature_value = feature_function(x, feature_vectors_list[j])
         subsum += unj * feature_value

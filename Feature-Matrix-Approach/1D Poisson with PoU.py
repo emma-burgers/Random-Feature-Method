@@ -109,7 +109,7 @@ def P(x, xn, feature_vector, r):
 
 
 # Choose number of features M, number of collocation points Q, and number of subdomains N
-for M in [40]:
+for M in [10]:
     error_list = []
 
     # Number of iterations for convergence study

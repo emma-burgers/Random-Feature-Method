@@ -119,7 +119,7 @@ def approximate_solution(x):
 
 
 ## M is the number of features
-for M in [20]:
+for M in [30]:
     error_list = []
 
     ## number of iterations for convergence study
